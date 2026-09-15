@@ -1,0 +1,64 @@
+{
+  "nodes": [
+    {
+      "id": "entrance",
+      "name": "Main Entrance",
+      "floor": "G",
+      "x": 0,
+      "y": 0,
+      "type": "entrance"
+    },
+    {
+      "id": "reception",
+      "name": "Reception",
+      "floor": "G",
+      "x": 10,
+      "y": 0,
+      "type": "room"
+    },
+    {
+      "id": "lift_g",
+      "name": "Lift A",
+      "floor": "G",
+      "x": 20,
+      "y": 0,
+      "type": "lift"
+    },
+    {
+      "id": "stairs_g",
+      "name": "Stairs A",
+      "floor": "G",
+      "x": 20,
+      "y": 10,
+      "type": "stairs"
+    },
+    {
+      "id": "radiology",
+      "name": "Radiology",
+      "floor": "1",
+      "x": 30,
+      "y": 0,
+      "type": "room"
+    }
+  ],
+  "edges": [
+    {
+      "from": "entrance",
+      "to": "reception",
+      "distance": 10,
+      "accessible": true
+    },
+    {
+      "from": "reception",
+      "to": "lift_g",
+      "distance": 10,
+      "accessible": true
+    },
+    {
+      "from": "reception",
+      "to": "stairs_g",
+      "distance": 15,
+      "accessible": true
+    }
+  ]
+}
