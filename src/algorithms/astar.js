@@ -1,4 +1,4 @@
-export function findRoute(map, start, end) {
+export function findRoute(map, start, end, accessible = false) {
   const byId = new Map(map.nodes.map((node) => [node.id, node]))
   if (!byId.has(start) || !byId.has(end)) return null
 
@@ -6,6 +6,8 @@ export function findRoute(map, start, end) {
   let heuristicScale = 1
 
   for (const edge of map.edges) {
+    if (accessible && edge.accessible !== true) continue
+
     adjacency.get(edge.from).push({ to: edge.to, distance: edge.distance })
     adjacency.get(edge.to).push({ to: edge.from, distance: edge.distance })
 

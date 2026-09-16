@@ -37,38 +37,91 @@ test('routes from the entrance to radiology across floors', () => {
   })
 })
 
-test('corridors can be traversed in both directions', () => {
-  const forward = findRoute(map, 'entrance', 'radiology')
-  assert.deepEqual(findRoute(map, 'radiology', 'entrance'), {
-    path: [...forward.path].reverse(),
-    distance: forward.distance,
+test('stairs are used normally but accessible routes use the lift', () => {
+  const ordinary = {
+    path: ['stairs_g', 'stairs_1', 'corridor2', 'radiology'],
+    distance: 50,
+  }
+  assert.deepEqual(findRoute(map, 'stairs_g', 'radiology'), ordinary)
+  assert.deepEqual(findRoute(map, 'stairs_g', 'radiology', false), ordinary)
+
+  const accessible = findRoute(map, 'stairs_g', 'radiology', true)
+  assert.ok(accessible)
+  assert.equal(accessible.distance, 81)
+  assert.equal(accessible.path[0], 'stairs_g')
+  assert.equal(accessible.path.at(-1), 'radiology')
+  assert.ok(accessible.path.includes('lift_g'))
+  assert.equal(accessible.path[accessible.path.indexOf('lift_g') + 1], 'lift_1')
+  assert.ok(!accessible.path.includes('stairs_1'))
+})
+
+for (const accessible of [false, true]) {
+  test(`corridors can be traversed in both directions (accessible=${accessible})`, () => {
+    const forward = findRoute(map, 'entrance', 'radiology', accessible)
+    assert.deepEqual(findRoute(map, 'radiology', 'entrance', accessible), {
+      path: [...forward.path].reverse(),
+      distance: forward.distance,
+    })
   })
-})
 
-test('a location routes to itself with zero distance', () => {
-  assert.deepEqual(findRoute(map, 'entrance', 'entrance'), {
-    path: ['entrance'],
-    distance: 0,
+  test(`a location routes to itself with zero distance (accessible=${accessible})`, () => {
+    assert.deepEqual(findRoute(map, 'entrance', 'entrance', accessible), {
+      path: ['entrance'],
+      distance: 0,
+    })
   })
-})
 
-test('unknown location IDs return no route', () => {
-  assert.equal(findRoute(map, 'unknown', 'radiology'), null)
-  assert.equal(findRoute(map, 'entrance', 'unknown'), null)
-  assert.equal(findRoute(map, 'unknown', 'unknown'), null)
-  assert.equal(findRoute(map, '__proto__', 'radiology'), null)
-})
-
-test('an empty map returns no route', () => {
-  assert.equal(findRoute({ nodes: [], edges: [] }, 'entrance', 'radiology'), null)
-})
-
-test('an isolated node can route to itself', () => {
-  const isolated = { nodes: [map.nodes[0]], edges: [] }
-  assert.deepEqual(findRoute(isolated, 'entrance', 'entrance'), {
-    path: ['entrance'],
-    distance: 0,
+  test(`unknown location IDs return no route (accessible=${accessible})`, () => {
+    assert.equal(findRoute(map, 'unknown', 'radiology', accessible), null)
+    assert.equal(findRoute(map, 'entrance', 'unknown', accessible), null)
+    assert.equal(findRoute(map, 'unknown', 'unknown', accessible), null)
+    assert.equal(findRoute(map, '__proto__', 'radiology', accessible), null)
   })
+
+  test(`an empty map returns no route (accessible=${accessible})`, () => {
+    assert.equal(findRoute({ nodes: [], edges: [] }, 'entrance', 'radiology', accessible), null)
+  })
+
+  test(`an isolated node can route to itself (accessible=${accessible})`, () => {
+    const isolated = { nodes: [map.nodes[0]], edges: [] }
+    assert.deepEqual(findRoute(isolated, 'entrance', 'entrance', accessible), {
+      path: ['entrance'],
+      distance: 0,
+    })
+  })
+}
+
+test('a stairs-only floor connection has no accessible route in either direction', () => {
+  const stairsOnly = {
+    ...map,
+    edges: map.edges.filter((edge) => !(edge.from === 'lift_g' && edge.to === 'lift_1')),
+  }
+  for (const [start, end] of [['entrance', 'radiology'], ['radiology', 'entrance']]) {
+    const ordinary = findRoute(stairsOnly, start, end)
+    assert.ok(ordinary)
+    assert.equal(ordinary.distance, 100)
+    assert.ok(ordinary.path.includes('stairs_g'))
+    assert.ok(ordinary.path.includes('stairs_1'))
+    assert.equal(findRoute(stairsOnly, start, end, true), null)
+  }
+})
+
+test('accessible edges must explicitly opt in; ordinary routing ignores the flag', () => {
+  for (const flag of [undefined, false, null, 0, 1, 'true', true]) {
+    const edge = { from: 'start', to: 'end', distance: 8 }
+    if (flag !== undefined) edge.accessible = flag
+    const graph = {
+      nodes: [{ id: 'start', x: 0, y: 0 }, { id: 'end', x: 10, y: 0 }],
+      edges: [edge],
+    }
+    for (const [start, end] of [['start', 'end'], ['end', 'start']]) {
+      const expected = { path: [start, end], distance: 8 }
+      assert.deepEqual(findRoute(graph, start, end), expected)
+      assert.deepEqual(findRoute(graph, start, end, false), expected)
+      assert.deepEqual(findRoute(graph, start, end, true), flag === true ? expected : null)
+      assert.deepEqual(findRoute(graph, start, start, true), { path: [start], distance: 0 })
+    }
+  }
 })
 
 test('disconnected floors return no route', () => {
@@ -93,10 +146,13 @@ test('drawing coordinates cannot hide a shorter detour', () => {
       { from: 'detour', to: 'end', distance: 1 },
     ],
   }
-  assert.deepEqual(findRoute(graph, 'start', 'end'), {
-    path: ['start', 'detour', 'end'],
-    distance: 2,
-  })
+  const expected = { path: ['start', 'detour', 'end'], distance: 2 }
+  assert.deepEqual(findRoute(graph, 'start', 'end'), expected)
+  const accessibleGraph = {
+    ...graph,
+    edges: graph.edges.map((edge) => ({ ...edge, accessible: true })),
+  }
+  assert.deepEqual(findRoute(accessibleGraph, 'start', 'end', true), expected)
 })
 
 test('identical coordinates on different floors retain their edge distance', () => {
@@ -149,48 +205,57 @@ test('parallel connections use the shortest edge', () => {
   })
 })
 
-test('all 256 demo location pairs match independently calculated shortest distances', () => {
-  const ids = map.nodes.map((node) => node.id)
-  const indexById = new Map(ids.map((id, index) => [id, index]))
-  const expected = ids.map((_, i) => ids.map((_, j) => i === j ? 0 : Infinity))
-  for (const edge of map.edges) {
-    const i = indexById.get(edge.from)
-    const j = indexById.get(edge.to)
-    expected[i][j] = expected[j][i] = Math.min(expected[i][j], edge.distance)
-  }
-  for (let k = 0; k < ids.length; k++) {
-    for (let i = 0; i < ids.length; i++) {
-      for (let j = 0; j < ids.length; j++) {
-        expected[i][j] = Math.min(expected[i][j], expected[i][k] + expected[k][j])
+for (const accessible of [false, true]) {
+  test(`all demo location pairs match Floyd-Warshall distances (accessible=${accessible})`, () => {
+    const ids = map.nodes.map((node) => node.id)
+    const indexById = new Map(ids.map((id, index) => [id, index]))
+    const allowedEdges = accessible ? map.edges.filter((edge) => edge.accessible === true) : map.edges
+    const expected = ids.map((_, i) => ids.map((_, j) => i === j ? 0 : Infinity))
+    for (const edge of allowedEdges) {
+      const i = indexById.get(edge.from)
+      const j = indexById.get(edge.to)
+      expected[i][j] = expected[j][i] = Math.min(expected[i][j], edge.distance)
+    }
+    for (let k = 0; k < ids.length; k++) {
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = 0; j < ids.length; j++) {
+          expected[i][j] = Math.min(expected[i][j], expected[i][k] + expected[k][j])
+        }
       }
     }
-  }
-  for (const [i, start] of ids.entries()) {
-    for (const [j, end] of ids.entries()) {
-      const route = findRoute(map, start, end)
-      assert.ok(route, `${start} -> ${end} must be reachable`)
-      assert.equal(route.distance, expected[i][j], `${start} -> ${end}`)
-      assert.equal(route.path[0], start)
-      assert.equal(route.path.at(-1), end)
-      assert.equal(new Set(route.path).size, route.path.length)
-      let distance = 0
-      for (let step = 1; step < route.path.length; step++) {
-        const from = route.path[step - 1]
-        const to = route.path[step]
-        const edge = map.edges.find((edge) =>
-          (edge.from === from && edge.to === to) || (edge.from === to && edge.to === from),
-        )
-        assert.ok(edge, `${from} -> ${to} must be connected`)
-        distance += edge.distance
+    for (const [i, start] of ids.entries()) {
+      for (const [j, end] of ids.entries()) {
+        const route = findRoute(map, start, end, accessible)
+        if (expected[i][j] === Infinity) {
+          assert.equal(route, null, `${start} -> ${end} must be unreachable`)
+          continue
+        }
+        assert.ok(route, `${start} -> ${end} must be reachable`)
+        assert.equal(route.distance, expected[i][j], `${start} -> ${end}`)
+        assert.equal(route.path[0], start)
+        assert.equal(route.path.at(-1), end)
+        assert.equal(new Set(route.path).size, route.path.length)
+        let distance = 0
+        for (let step = 1; step < route.path.length; step++) {
+          const from = route.path[step - 1]
+          const to = route.path[step]
+          const edges = allowedEdges.filter((edge) =>
+            (edge.from === from && edge.to === to) || (edge.from === to && edge.to === from),
+          )
+          assert.ok(edges.length > 0, `${from} -> ${to} must have an allowed edge`)
+          distance += Math.min(...edges.map((edge) => edge.distance))
+        }
+        assert.equal(distance, route.distance)
       }
-      assert.equal(distance, route.distance)
     }
-  }
-})
+  })
+}
 
 test('route calculation does not mutate the hospital map', () => {
   const before = structuredClone(map)
-  findRoute(map, 'entrance', 'radiology')
-  findRoute(map, 'stairs_g', 'radiology')
+  for (const accessible of [false, true]) {
+    findRoute(map, 'entrance', 'radiology', accessible)
+    findRoute(map, 'stairs_g', 'radiology', accessible)
+  }
   assert.deepEqual(map, before)
 })
