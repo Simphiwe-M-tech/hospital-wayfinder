@@ -1,16 +1,48 @@
-import { Icon } from './Icon.jsx'
+import { Check, Navigation } from 'lucide-react'
 import { floorLabel } from '../utils/directions.js'
 
-export default function ArrivalScreen({ destinationNode, onRestart }) {
+export default function ArrivalScreen({ destinationNode, journey, onRestart }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-5 py-10 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-tealsoft text-teal"><Icon name="check" className="h-9 w-9" /></div>
-      <div>
-        <p className="text-xs font-semibold text-teal">Destination confirmed</p>
-        <h1 id="screen-heading" className="screen-heading mt-2">You have reached {destinationNode.name}</h1>
-        <p className="mt-3 text-sm text-inksoft">{floorLabel(destinationNode.floor)} · Your journey is complete.</p>
+    <div className="app-frame">
+      <div className="card overflow-hidden">
+        <div className="flex flex-col items-center gap-4 bg-success-soft px-4 py-10 text-center">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success text-white">
+            <Check size={30} strokeWidth={2.6} aria-hidden="true" />
+          </span>
+          <div>
+            <p className="screen-eyebrow text-success">Simulated arrival</p>
+            <h1 id="screen-heading" className="screen-heading mt-1.5">
+              Arrival at {destinationNode.name}
+            </h1>
+            <p className="screen-sub mt-2">
+              {floorLabel(destinationNode.floor)} · Your simulated journey is complete.
+            </p>
+          </div>
+        </div>
+        {journey && journey.steps > 0 && (
+          <div className="flex items-stretch justify-center divide-x divide-line border-t border-line">
+            <div className="px-7 py-3.5 text-center">
+              <p className="text-[16px] font-extrabold leading-tight text-ink">
+                {Math.round(journey.distance)} m
+              </p>
+              <p className="text-[10.5px] font-semibold uppercase tracking-wide text-inksoft">Route</p>
+            </div>
+            <div className="px-7 py-3.5 text-center">
+              <p className="text-[16px] font-extrabold leading-tight text-ink">{journey.steps}</p>
+              <p className="text-[10.5px] font-semibold uppercase tracking-wide text-inksoft">Steps</p>
+            </div>
+          </div>
+        )}
       </div>
-      <button type="button" onClick={onRestart} className="primary-button mt-3 w-full">Plan another route</button>
+
+      <p className="screen-sub text-center">
+        This result comes from a selected map point or simulated checkpoint; it does not verify your physical location.
+      </p>
+
+      <button type="button" onClick={onRestart} className="primary-button w-full text-[15px]">
+        <Navigation size={17} aria-hidden="true" />
+        Plan another route
+      </button>
     </div>
   )
 }
