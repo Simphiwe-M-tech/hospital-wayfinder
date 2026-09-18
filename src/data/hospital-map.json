@@ -314,6 +314,328 @@
       "y": 65
     }
   ],
+  "nodes": [
+    {
+      "id": "stairs_left_g",
+      "name": "West Staircase Landing",
+      "floor": "G",
+      "type": "junction",
+      "x": 10,
+      "y": 50,
+      "qrCode": "QR-STAIRS-W-G"
+    },
+    {
+      "id": "hall_west_g",
+      "name": "West Corridor",
+      "floor": "G",
+      "type": "junction",
+      "x": 20,
+      "y": 50
+    },
+    {
+      "id": "hall_mid1_g",
+      "name": "Central Corridor A",
+      "floor": "G",
+      "type": "junction",
+      "x": 40,
+      "y": 50
+    },
+    {
+      "id": "hall_mid2_g",
+      "name": "Central Corridor B",
+      "floor": "G",
+      "type": "junction",
+      "x": 60,
+      "y": 50
+    },
+    {
+      "id": "hall_east_g",
+      "name": "East Corridor",
+      "floor": "G",
+      "type": "junction",
+      "x": 76,
+      "y": 50
+    },
+    {
+      "id": "lift_lobby_g",
+      "name": "Lift Lobby",
+      "floor": "G",
+      "type": "junction",
+      "x": 87,
+      "y": 50,
+      "qrCode": "QR-LIFT-LOBBY-G"
+    },
+    {
+      "id": "stairs_right_g",
+      "name": "East Staircase Landing",
+      "floor": "G",
+      "type": "junction",
+      "x": 94,
+      "y": 50,
+      "qrCode": "QR-STAIRS-E-G"
+    },
+    {
+      "id": "msl006_g",
+      "name": "MSL 006",
+      "floor": "G",
+      "type": "room",
+      "x": 34,
+      "y": 22,
+      "qrCode": "QR-MSL006-G"
+    },
+    {
+      "id": "msl005_g",
+      "name": "MSL 005",
+      "floor": "G",
+      "type": "room",
+      "x": 50,
+      "y": 22
+    },
+    {
+      "id": "msl004_g",
+      "name": "MSL 004",
+      "floor": "G",
+      "type": "room",
+      "x": 69,
+      "y": 22
+    },
+    {
+      "id": "reception_g",
+      "name": "MSL Collection Centre 001 (Reception)",
+      "floor": "G",
+      "type": "room",
+      "x": 72,
+      "y": 72,
+      "qrCode": "QR-RECEPTION-G"
+    },
+    {
+      "id": "male_toilet_g",
+      "name": "Male Toilet",
+      "floor": "G",
+      "type": "bathroom",
+      "x": 96,
+      "y": 20,
+      "qrCode": "QR-MALE-TOILET-G"
+    },
+    {
+      "id": "female_toilet_g",
+      "name": "Female Toilet",
+      "floor": "G",
+      "type": "bathroom",
+      "x": 96,
+      "y": 32,
+      "qrCode": "QR-FEMALE-TOILET-G"
+    },
+    {
+      "id": "lift_g",
+      "name": "Lift",
+      "floor": "G",
+      "type": "lift",
+      "x": 88,
+      "y": 65
+    },
+    {
+      "id": "stairs_left_1",
+      "name": "West Staircase Landing",
+      "floor": "1",
+      "type": "junction",
+      "x": 10,
+      "y": 50,
+      "qrCode": "QR-STAIRS-W-1"
+    },
+    {
+      "id": "hall_west_1",
+      "name": "West Corridor",
+      "floor": "1",
+      "type": "junction",
+      "x": 20,
+      "y": 50
+    },
+    {
+      "id": "hall_mid1_1",
+      "name": "Central Corridor A",
+      "floor": "1",
+      "type": "junction",
+      "x": 40,
+      "y": 50
+    },
+    {
+      "id": "hall_mid2_1",
+      "name": "Central Corridor B",
+      "floor": "1",
+      "type": "junction",
+      "x": 60,
+      "y": 50
+    },
+    {
+      "id": "hall_east_1",
+      "name": "East Corridor",
+      "floor": "1",
+      "type": "junction",
+      "x": 76,
+      "y": 50
+    },
+    {
+      "id": "lift_lobby_1",
+      "name": "Lift Lobby",
+      "floor": "1",
+      "type": "junction",
+      "x": 87,
+      "y": 50,
+      "qrCode": "QR-LIFT-LOBBY-1"
+    },
+    {
+      "id": "stairs_right_1",
+      "name": "East Staircase Landing",
+      "floor": "1",
+      "type": "junction",
+      "x": 94,
+      "y": 50,
+      "qrCode": "QR-STAIRS-E-1"
+    },
+    {
+      "id": "actuarial_sciences_1",
+      "name": "Actuarial Sciences",
+      "floor": "1",
+      "type": "room",
+      "x": 9,
+      "y": 24
+    },
+    {
+      "id": "av_room_1",
+      "name": "AV Room",
+      "floor": "1",
+      "type": "room",
+      "x": 23,
+      "y": 24
+    },
+    {
+      "id": "msl111_1",
+      "name": "MSL 111",
+      "floor": "1",
+      "type": "room",
+      "x": 34,
+      "y": 22,
+      "qrCode": "QR-MSL111-1"
+    },
+    {
+      "id": "msl110_1",
+      "name": "MSL 110",
+      "floor": "1",
+      "type": "room",
+      "x": 46,
+      "y": 22,
+      "qrCode": "QR-MSL110-1"
+    },
+    {
+      "id": "msl109_1",
+      "name": "MSL 109",
+      "floor": "1",
+      "type": "room",
+      "x": 58,
+      "y": 22,
+      "qrCode": "QR-MSL109-1"
+    },
+    {
+      "id": "msl108_1",
+      "name": "MSL 108",
+      "floor": "1",
+      "type": "room",
+      "x": 70,
+      "y": 22,
+      "qrCode": "QR-MSL108-1"
+    },
+    {
+      "id": "ug_robotics_1",
+      "name": "UG Robotics",
+      "floor": "1",
+      "type": "room",
+      "x": 35,
+      "y": 73
+    },
+    {
+      "id": "software_dev_1",
+      "name": "Software Dev",
+      "floor": "1",
+      "type": "room",
+      "x": 43,
+      "y": 73
+    },
+    {
+      "id": "web_dev_1",
+      "name": "Web Dev",
+      "floor": "1",
+      "type": "room",
+      "x": 50,
+      "y": 73
+    },
+    {
+      "id": "high_perf_comp_1",
+      "name": "High Perf. Comp",
+      "floor": "1",
+      "type": "room",
+      "x": 57,
+      "y": 73
+    },
+    {
+      "id": "comp_eco_1",
+      "name": "Comp Eco",
+      "floor": "1",
+      "type": "room",
+      "x": 64,
+      "y": 73
+    },
+    {
+      "id": "high_diploma_lab_1",
+      "name": "High Diploma Comp Sc Lab",
+      "floor": "1",
+      "type": "room",
+      "x": 73,
+      "y": 73
+    },
+    {
+      "id": "electrical_1",
+      "name": "Electrical",
+      "floor": "1",
+      "type": "room",
+      "x": 83,
+      "y": 73
+    },
+    {
+      "id": "male_toilet_1",
+      "name": "Male Toilet",
+      "floor": "1",
+      "type": "bathroom",
+      "x": 96,
+      "y": 20,
+      "qrCode": "QR-MALE-TOILET-1"
+    },
+    {
+      "id": "female_toilet_1",
+      "name": "Female Toilet",
+      "floor": "1",
+      "type": "bathroom",
+      "x": 96,
+      "y": 32,
+      "qrCode": "QR-FEMALE-TOILET-1"
+    },
+    {
+      "id": "accessible_toilet_1",
+      "name": "Accessible Toilet",
+      "floor": "1",
+      "type": "bathroom",
+      "x": 86,
+      "y": 33
+    },
+    {
+      "id": "lift_1",
+      "name": "Lift",
+      "floor": "1",
+      "type": "lift",
+      "x": 88,
+      "y": 65
+    }
+  ],
   "edges": [
     {
       "from": "stairs_left_g",
