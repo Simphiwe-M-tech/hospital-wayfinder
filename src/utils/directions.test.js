@@ -2,10 +2,15 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { findRoute } from '../algorithms/astar.js'
+import { adaptHospitalMap } from '../lib/mapAdapter.js'
 import { buildSteps, floorLabel } from './directions.js'
 import { classifyScan } from './reroute.js'
 
-const map = JSON.parse(readFileSync(new URL('../../public/hospital-map.json', import.meta.url), 'utf8'))
+// Like astar.test.js, this loads the real school-building map the app actually serves
+// (src/data/hospital-map.json), through the same adaptHospitalMap() step the app uses —
+// not the old public/hospital-map.json demo graph the app no longer references.
+const rawMap = JSON.parse(readFileSync(new URL('../data/hospital-map.json', import.meta.url), 'utf8'))
+const { map } = adaptHospitalMap(rawMap)
 
 test('floor labels distinguish ground from upper floors', () => {
   assert.equal(floorLabel('G'), 'Ground floor')
@@ -14,19 +19,19 @@ test('floor labels distinguish ground from upper floors', () => {
 
 test('empty and already-arrived paths have no walking instructions', () => {
   assert.deepEqual(buildSteps(map, []), [])
-  assert.deepEqual(buildSteps(map, ['entrance']), [])
+  assert.deepEqual(buildSteps(map, ['reception']), [])
 })
 
-test('lift and stairs directions work with the existing G and 1 floor IDs', () => {
-  assert.equal(buildSteps(map, ['lift_g', 'lift_1'])[0].text, 'Take the lift up to Floor 1')
-  assert.equal(buildSteps(map, ['lift_1', 'lift_g'])[0].text, 'Take the lift down to Ground floor')
-  assert.equal(buildSteps(map, ['stairs_g', 'stairs_1'])[0].text, 'Take the stairs up to Floor 1')
-  assert.equal(buildSteps(map, ['stairs_1', 'stairs_g'])[0].text, 'Take the stairs down to Ground floor')
+test('lift and stairs directions work with the school-building lift and stairs IDs', () => {
+  assert.equal(buildSteps(map, ['lift_lobby', 'lift_lobby_1'])[0].text, 'Take the lift up to Floor 1')
+  assert.equal(buildSteps(map, ['lift_lobby_1', 'lift_lobby'])[0].text, 'Take the lift down to Ground floor')
+  assert.equal(buildSteps(map, ['staircase_landing', 'staircase_landing_1'])[0].text, 'Take the stairs up to Floor 1')
+  assert.equal(buildSteps(map, ['staircase_landing_1', 'staircase_landing'])[0].text, 'Take the stairs down to Ground floor')
 })
 
 test('the first instruction after a floor change does not guess the exit heading', () => {
-  const steps = buildSteps(map, ['lift_g', 'lift_1', 'corridor2'])
-  assert.equal(steps[1].text, 'Head towards Corridor B')
+  const steps = buildSteps(map, ['lift_lobby', 'lift_lobby_1', 'msl006_1'])
+  assert.equal(steps[1].text, 'Head towards MSL 006 (F1)')
 })
 
 test('turn directions use the drawing coordinate orientation', () => {
@@ -47,16 +52,16 @@ test('directions use the correct parallel edge distance in each accessibility mo
   const graph = {
     nodes: map.nodes.slice(0, 2),
     edges: [
-      { from: 'entrance', to: 'reception', distance: 2, accessible: false },
-      { from: 'entrance', to: 'reception', distance: 5, accessible: true },
+      { from: 'reception', to: 'msl006', distance: 2, accessible: false },
+      { from: 'reception', to: 'msl006', distance: 5, accessible: true },
     ],
   }
-  assert.equal(buildSteps(graph, ['entrance', 'reception'])[0].distance, 2)
-  assert.equal(buildSteps(graph, ['entrance', 'reception'], true)[0].distance, 5)
+  assert.equal(buildSteps(graph, ['reception', 'msl006'])[0].distance, 2)
+  assert.equal(buildSteps(graph, ['reception', 'msl006'], true)[0].distance, 5)
 })
 
 for (const accessible of [false, true]) {
-  test(`directions match every demo route and its total distance (accessible=${accessible})`, () => {
+  test(`directions match every school-map route and its total distance (accessible=${accessible})`, () => {
     for (const start of map.nodes) {
       for (const end of map.nodes) {
         const route = findRoute(map, start.id, end.id, accessible)
@@ -76,30 +81,30 @@ for (const accessible of [false, true]) {
 }
 
 const journey = {
-  path: ['entrance', 'reception', 'corridor1', 'lift_g', 'lift_1', 'corridor2', 'radiology'],
+  path: ['reception', 'msl006', 'staircase_landing', 'staircase_landing_1', 'msl006_1'],
   stepIndex: 1,
-  currentId: 'reception',
-  destinationId: 'radiology',
+  currentId: 'msl006',
+  destinationId: 'msl006_1',
 }
 
 test('scanning the destination confirms arrival', () => {
-  assert.equal(classifyScan({ ...journey, scannedId: 'radiology' }), 'arrived')
+  assert.equal(classifyScan({ ...journey, scannedId: 'msl006_1' }), 'arrived')
 })
 
 test('repeated scans do not advance progress or trigger rerouting', () => {
-  assert.equal(classifyScan({ ...journey, scannedId: 'reception' }), 'same')
+  assert.equal(classifyScan({ ...journey, scannedId: 'msl006' }), 'same')
 })
 
 test('expected and later checkpoints advance progress', () => {
-  assert.equal(classifyScan({ ...journey, scannedId: 'corridor1' }), 'advance')
-  assert.equal(classifyScan({ ...journey, scannedId: 'lift_1' }), 'advance')
+  assert.equal(classifyScan({ ...journey, scannedId: 'staircase_landing' }), 'advance')
+  assert.equal(classifyScan({ ...journey, scannedId: 'staircase_landing_1' }), 'advance')
 })
 
 test('backtracking and off-route scans need a new route', () => {
-  assert.equal(classifyScan({ ...journey, scannedId: 'entrance' }), 'reroute')
-  assert.equal(classifyScan({ ...journey, scannedId: 'cafeteria' }), 'reroute')
+  assert.equal(classifyScan({ ...journey, scannedId: 'reception' }), 'reroute')
+  assert.equal(classifyScan({ ...journey, scannedId: 'bathroom' }), 'reroute')
 })
 
 test('a new checkpoint can recover a journey with no route', () => {
-  assert.equal(classifyScan({ ...journey, path: [], stepIndex: 0, scannedId: 'lift_1' }), 'reroute')
+  assert.equal(classifyScan({ ...journey, path: [], stepIndex: 0, scannedId: 'staircase_landing_1' }), 'reroute')
 })
