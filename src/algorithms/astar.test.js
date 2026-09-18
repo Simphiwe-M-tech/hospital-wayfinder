@@ -2,10 +2,26 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import { findRoute } from './astar.js'
+import { adaptHospitalMap } from '../lib/mapAdapter.js'
 
-const map = JSON.parse(readFileSync(new URL('../../public/hospital-map.json', import.meta.url), 'utf8'))
+// This suite tests findRoute against the real school-building map the app actually
+// serves (src/lib/hospitals.js loads src/data/hospital-map.json), run through the
+// same adaptHospitalMap() step the app uses. Previously this file loaded
+// public/hospital-map.json, an old placeholder demo graph the app no longer
+// references at all — so this exhaustive check was never exercising real routes.
+const rawMap = JSON.parse(readFileSync(new URL('../data/hospital-map.json', import.meta.url), 'utf8'))
+const { map, issues } = adaptHospitalMap(rawMap)
 
-test('demo map has unique locations, valid edges, and selectable destinations', () => {
+test('map notes still flag placeholder geometry — once this fails, Person 2 has shipped real coordinates/distances; re-run this whole suite against the update, confirm the hardcoded distances below still hold, then delete this test', () => {
+  assert.match(
+    rawMap.notes ?? '',
+    /placeholder/i,
+    'hospital-map.json no longer mentions placeholder data',
+  )
+})
+
+test('the school map adapts cleanly and has unique locations, valid edges, and selectable destinations', () => {
+  assert.equal(issues.length, 0, issues.join(' | '))
   const ids = new Set(map.nodes.map((node) => node.id))
   assert.equal(ids.size, map.nodes.length)
   assert.ok(ids.size > 0)
@@ -25,67 +41,67 @@ test('demo map has unique locations, valid edges, and selectable destinations', 
   assert.ok(map.destinations.length > 0)
   assert.equal(new Set(map.destinations).size, map.destinations.length)
   for (const id of map.destinations) assert.ok(ids.has(id))
-  for (const id of ['entrance', 'reception', 'lift_g', 'stairs_g', 'radiology']) {
+  for (const id of ['reception', 'msl006', 'bathroom', 'lift_lobby', 'staircase_landing']) {
     assert.ok(ids.has(id))
   }
 })
 
-test('routes from the entrance to radiology across floors', () => {
-  assert.deepEqual(findRoute(map, 'entrance', 'radiology'), {
-    path: ['entrance', 'reception', 'corridor1', 'lift_g', 'lift_1', 'corridor2', 'radiology'],
-    distance: 91,
+test('routes from reception to MSL 006 (F1) across floors', () => {
+  assert.deepEqual(findRoute(map, 'reception', 'msl006_1'), {
+    path: ['reception', 'msl006', 'staircase_landing', 'staircase_landing_1', 'msl006_1'],
+    distance: 33,
   })
 })
 
 test('stairs are used normally but accessible routes use the lift', () => {
   const ordinary = {
-    path: ['stairs_g', 'stairs_1', 'corridor2', 'radiology'],
-    distance: 50,
+    path: ['staircase_landing', 'staircase_landing_1', 'msl006_1'],
+    distance: 13,
   }
-  assert.deepEqual(findRoute(map, 'stairs_g', 'radiology'), ordinary)
-  assert.deepEqual(findRoute(map, 'stairs_g', 'radiology', false), ordinary)
+  assert.deepEqual(findRoute(map, 'staircase_landing', 'msl006_1'), ordinary)
+  assert.deepEqual(findRoute(map, 'staircase_landing', 'msl006_1', false), ordinary)
 
-  const accessible = findRoute(map, 'stairs_g', 'radiology', true)
+  const accessible = findRoute(map, 'staircase_landing', 'msl006_1', true)
   assert.ok(accessible)
-  assert.equal(accessible.distance, 81)
-  assert.equal(accessible.path[0], 'stairs_g')
-  assert.equal(accessible.path.at(-1), 'radiology')
-  assert.ok(accessible.path.includes('lift_g'))
-  assert.equal(accessible.path[accessible.path.indexOf('lift_g') + 1], 'lift_1')
-  assert.ok(!accessible.path.includes('stairs_1'))
+  assert.equal(accessible.distance, 61)
+  assert.equal(accessible.path[0], 'staircase_landing')
+  assert.equal(accessible.path.at(-1), 'msl006_1')
+  assert.ok(accessible.path.includes('lift_lobby'))
+  assert.equal(accessible.path[accessible.path.indexOf('lift_lobby') + 1], 'lift_lobby_1')
+  assert.ok(!accessible.path.includes('staircase_landing_1'))
 })
 
 for (const accessible of [false, true]) {
   test(`corridors can be traversed in both directions (accessible=${accessible})`, () => {
-    const forward = findRoute(map, 'entrance', 'radiology', accessible)
-    assert.deepEqual(findRoute(map, 'radiology', 'entrance', accessible), {
+    const forward = findRoute(map, 'reception', 'msl006_1', accessible)
+    assert.deepEqual(findRoute(map, 'msl006_1', 'reception', accessible), {
       path: [...forward.path].reverse(),
       distance: forward.distance,
     })
   })
 
   test(`a location routes to itself with zero distance (accessible=${accessible})`, () => {
-    assert.deepEqual(findRoute(map, 'entrance', 'entrance', accessible), {
-      path: ['entrance'],
+    assert.deepEqual(findRoute(map, 'reception', 'reception', accessible), {
+      path: ['reception'],
       distance: 0,
     })
   })
 
   test(`unknown location IDs return no route (accessible=${accessible})`, () => {
-    assert.equal(findRoute(map, 'unknown', 'radiology', accessible), null)
-    assert.equal(findRoute(map, 'entrance', 'unknown', accessible), null)
+    assert.equal(findRoute(map, 'unknown', 'msl006_1', accessible), null)
+    assert.equal(findRoute(map, 'reception', 'unknown', accessible), null)
     assert.equal(findRoute(map, 'unknown', 'unknown', accessible), null)
-    assert.equal(findRoute(map, '__proto__', 'radiology', accessible), null)
+    assert.equal(findRoute(map, '__proto__', 'msl006_1', accessible), null)
   })
 
   test(`an empty map returns no route (accessible=${accessible})`, () => {
-    assert.equal(findRoute({ nodes: [], edges: [] }, 'entrance', 'radiology', accessible), null)
+    assert.equal(findRoute({ nodes: [], edges: [] }, 'reception', 'msl006_1', accessible), null)
   })
 
   test(`an isolated node can route to itself (accessible=${accessible})`, () => {
     const isolated = { nodes: [map.nodes[0]], edges: [] }
-    assert.deepEqual(findRoute(isolated, 'entrance', 'entrance', accessible), {
-      path: ['entrance'],
+    assert.deepEqual(findRoute(isolated, map.nodes[0].id, map.nodes[0].id, accessible), {
+      path: [map.nodes[0].id],
       distance: 0,
     })
   })
@@ -94,14 +110,14 @@ for (const accessible of [false, true]) {
 test('a stairs-only floor connection has no accessible route in either direction', () => {
   const stairsOnly = {
     ...map,
-    edges: map.edges.filter((edge) => !(edge.from === 'lift_g' && edge.to === 'lift_1')),
+    edges: map.edges.filter((edge) => !(edge.from === 'lift_lobby' && edge.to === 'lift_lobby_1')),
   }
-  for (const [start, end] of [['entrance', 'radiology'], ['radiology', 'entrance']]) {
+  for (const [start, end] of [['reception', 'msl006_1'], ['msl006_1', 'reception']]) {
     const ordinary = findRoute(stairsOnly, start, end)
     assert.ok(ordinary)
-    assert.equal(ordinary.distance, 100)
-    assert.ok(ordinary.path.includes('stairs_g'))
-    assert.ok(ordinary.path.includes('stairs_1'))
+    assert.equal(ordinary.distance, 33)
+    assert.ok(ordinary.path.includes('staircase_landing'))
+    assert.ok(ordinary.path.includes('staircase_landing_1'))
     assert.equal(findRoute(stairsOnly, start, end, true), null)
   }
 })
@@ -130,7 +146,7 @@ test('disconnected floors return no route', () => {
     ...map,
     edges: map.edges.filter((edge) => byId.get(edge.from).floor === byId.get(edge.to).floor),
   }
-  assert.equal(findRoute(disconnected, 'entrance', 'radiology'), null)
+  assert.equal(findRoute(disconnected, 'reception', 'msl006_1'), null)
 })
 
 test('drawing coordinates cannot hide a shorter detour', () => {
@@ -206,7 +222,7 @@ test('parallel connections use the shortest edge', () => {
 })
 
 for (const accessible of [false, true]) {
-  test(`all demo location pairs match Floyd-Warshall distances (accessible=${accessible})`, () => {
+  test(`all school-map location pairs match Floyd-Warshall distances (accessible=${accessible})`, () => {
     const ids = map.nodes.map((node) => node.id)
     const indexById = new Map(ids.map((id, index) => [id, index]))
     const allowedEdges = accessible ? map.edges.filter((edge) => edge.accessible === true) : map.edges
@@ -254,8 +270,8 @@ for (const accessible of [false, true]) {
 test('route calculation does not mutate the hospital map', () => {
   const before = structuredClone(map)
   for (const accessible of [false, true]) {
-    findRoute(map, 'entrance', 'radiology', accessible)
-    findRoute(map, 'stairs_g', 'radiology', accessible)
+    findRoute(map, 'reception', 'msl006_1', accessible)
+    findRoute(map, 'staircase_landing', 'msl006_1', accessible)
   }
   assert.deepEqual(map, before)
 })
