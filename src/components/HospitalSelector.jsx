@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react'
-import { ArrowLeft, Building2, ChevronRight, Layers, MapPin, QrCode, Search, X } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Layers, MapPin, QrCode, Search, X } from 'lucide-react'
+import HospitalPreview from './HospitalPreview.jsx'
+
+const STAT_ICONS = { floors: Layers, destinations: MapPin, checkpoints: QrCode }
 
 export default function HospitalSelector({ hospitals, onSelect, onBack }) {
   const [query, setQuery] = useState('')
@@ -7,12 +10,11 @@ export default function HospitalSelector({ hospitals, onSelect, onBack }) {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return hospitals
-    return hospitals.filter((hospital) =>
-      `${hospital.name} ${hospital.tagline ?? ''}`.toLowerCase().includes(q),
-    )
+    return hospitals.filter((hospital) => hospital.name.toLowerCase().includes(q))
   }, [hospitals, query])
 
-  const availability = `${hospitals.length} hospital${hospitals.length === 1 ? ' is' : 's are'} available in this demo.`
+  const liveCount = hospitals.filter((hospital) => hospital.navigationAvailable).length
+  const availability = `${hospitals.length} hospitals in this demo · ${liveCount} with a working map · ${hospitals.length - liveCount} preview only.`
 
   return (
     <div className="app-frame hospital-selector">
@@ -35,8 +37,8 @@ export default function HospitalSelector({ hospitals, onSelect, onBack }) {
         </div>
 
         <p className="screen-sub">
-          Pick a hospital to load its floor map. Your location is set by scanning
-          a QR checkpoint once you are inside.
+          Pick a hospital to see its overview. Navigation is available where a floor
+          map has been mapped; preview hospitals show illustrative data only.
         </p>
 
         <div className="relative">
@@ -50,7 +52,7 @@ export default function HospitalSelector({ hospitals, onSelect, onBack }) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search hospitals"
-            aria-label="Search hospitals"
+            aria-label="Search hospitals by name"
             enterKeyHint="search"
             className="h-11 w-full rounded-full border border-line bg-white pl-11 pr-11 text-[14.5px] text-ink outline-none placeholder:text-inksoft/70 focus:border-teal"
           />
@@ -69,53 +71,54 @@ export default function HospitalSelector({ hospitals, onSelect, onBack }) {
 
       <div className="hospital-selector-results">
         {filtered.length > 0 ? (
-          <ul className="flex flex-col gap-3">
+          <ul className="flex flex-col gap-4">
             {filtered.map((hospital) => (
               <li key={hospital.id}>
                 <button
                   type="button"
-                  className="card group flex w-full flex-col gap-3 p-4 text-left transition-colors hover:border-teal/50"
+                  className="card hospital-card group"
                   onClick={() => onSelect(hospital)}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-soft text-teal">
-                        <Building2 size={22} strokeWidth={1.8} aria-hidden="true" />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-[15.5px] font-bold leading-tight text-ink">
+                  <span className="hospital-card-media">
+                    <HospitalPreview hospital={hospital} />
+                    <span className="hospital-card-badge">{hospital.badge}</span>
+                  </span>
+
+                  <span className="hospital-card-body">
+                    <span className="flex items-start justify-between gap-3">
+                      <span className="min-w-0">
+                        <span className="block truncate text-[15.5px] font-bold leading-tight text-ink">
                           {hospital.name}
-                        </p>
-                        {hospital.badge && (
-                          <span className="mt-1 inline-block rounded-full bg-amber-soft px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-wide text-amber-text">
-                            {hospital.badge}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-soft text-teal transition-colors group-hover:bg-teal group-hover:text-white">
-                      <ChevronRight size={18} aria-hidden="true" />
+                        </span>
+                        <span className="mt-1 block text-[11px] font-semibold text-inksoft">
+                          {hospital.statsSource === 'map'
+                            ? 'Live demo map'
+                            : 'Preview only — no map'}
+                        </span>
+                      </span>
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-soft text-teal transition-colors group-hover:bg-teal group-hover:text-white">
+                        <ChevronRight size={18} aria-hidden="true" />
+                      </span>
                     </span>
-                  </div>
-                  {hospital.tagline && (
-                    <p className="text-[13.5px] leading-relaxed text-inksoft">{hospital.tagline}</p>
-                  )}
-                  {hospital.stats && (
-                    <div className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-line pt-3 text-[12px] text-inksoft">
-                      <span className="flex items-center gap-1.5">
-                        <Layers size={13} aria-hidden="true" />
-                        {hospital.stats.floors} floors
+
+                    {hospital.tagline && (
+                      <span className="block text-[13.5px] leading-relaxed text-inksoft">
+                        {hospital.tagline}
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        <MapPin size={13} aria-hidden="true" />
-                        {hospital.stats.destinations} destinations
+                    )}
+
+                    {hospital.stats && (
+                      <span className="hospital-card-stats">
+                        {Object.entries(STAT_ICONS).map(([key, StatIcon]) => (
+                          <span key={key} className="flex items-center gap-1.5">
+                            <StatIcon size={13} aria-hidden="true" />
+                            {hospital.stats[key]}{' '}
+                            {key === 'checkpoints' ? 'QR checkpoints' : key}
+                          </span>
+                        ))}
                       </span>
-                      <span className="flex items-center gap-1.5">
-                        <QrCode size={13} aria-hidden="true" />
-                        {hospital.stats.checkpoints} QR checkpoints
-                      </span>
-                    </div>
-                  )}
+                    )}
+                  </span>
                 </button>
               </li>
             ))}
@@ -125,9 +128,7 @@ export default function HospitalSelector({ hospitals, onSelect, onBack }) {
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-teal-soft text-teal">
               <Search size={20} aria-hidden="true" />
             </span>
-            <p className="text-[14px] font-semibold text-ink">
-              No hospitals match “{query.trim()}”.
-            </p>
+            <p className="text-[14px] font-semibold text-ink">No hospitals found. Try another name.</p>
             <button type="button" className="secondary-button" onClick={() => setQuery('')}>
               Clear search
             </button>
@@ -136,7 +137,7 @@ export default function HospitalSelector({ hospitals, onSelect, onBack }) {
       </div>
 
       <p className="hospital-selector-footer text-center text-[12px] leading-relaxed text-inksoft">
-        {availability} The registry is ready for more.
+        {availability}
       </p>
     </div>
   )

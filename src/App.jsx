@@ -8,6 +8,7 @@ import { adaptHospitalMap, resolveScan } from './lib/mapAdapter.js'
 import BrandMark from './components/BrandMark.jsx'
 import WelcomeScreen from './components/WelcomeScreen.jsx'
 import HospitalSelector from './components/HospitalSelector.jsx'
+import HospitalOverview from './components/HospitalOverview.jsx'
 import QRScanner from './components/QRScanner.jsx'
 import DestinationPicker from './components/DestinationPicker.jsx'
 import HospitalMap from './components/HospitalMap.jsx'
@@ -55,6 +56,7 @@ function ShellFooter() {
 
 export default function App() {
   const [hospital, setHospital] = useState(null)
+  const [previewHospital, setPreviewHospital] = useState(null)
   const [map, setMap] = useState(null)
   const [loadError, setLoadError] = useState(false)
   const [loadAttempt, setLoadAttempt] = useState(0)
@@ -68,7 +70,7 @@ export default function App() {
   const mainRef = useRef(null)
 
   useEffect(() => {
-    if (!hospital) return undefined
+    if (!hospital?.loadMap) return undefined
     let cancelled = false
     hospital
       .loadMap()
@@ -126,6 +128,26 @@ if (screen === 'qrcodes') {
             hospitals={hospitals}
             onSelect={handleSelectHospital}
             onBack={() => setScreen('welcome')}
+          />
+        </main>
+        <ShellFooter />
+      </div>
+    )
+  }
+
+  if (screen === 'overview') {
+    return (
+      <div className="wayfinder-shell">
+        <ShellHeader
+          hospital={previewHospital}
+          currentNode={null}
+          onSwitchHospital={() => setScreen('hospital')}
+        />
+        <main ref={mainRef} tabIndex={-1} aria-labelledby="screen-heading" className="flex flex-1 flex-col outline-none">
+          <HospitalOverview
+            hospital={previewHospital}
+            onBack={() => setScreen('hospital')}
+            onStartNavigation={handleStartNavigation}
           />
         </main>
         <ShellFooter />
@@ -201,6 +223,16 @@ if (screen === 'qrcodes') {
   }
 
   function handleSelectHospital(entry) {
+    resetJourney()
+    setMap(null)
+    setLoadError(false)
+    setHospital(null)
+    setPreviewHospital(entry)
+    setScreen('overview')
+  }
+
+  function handleStartNavigation(entry) {
+    if (!entry.navigationAvailable || !entry.loadMap) return
     resetJourney()
     setMap(null)
     setLoadError(false)
