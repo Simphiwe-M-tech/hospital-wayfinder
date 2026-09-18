@@ -55,7 +55,7 @@ export default function QrTile({ node, current = false, highlight, onScan }) {
   return (
     <button
       type="button"
-      aria-label={`Simulate scanning ${node.qrCode} at ${node.name}, ${floorLabel(node.floor)}`}
+      aria-label={`Mark ${node.qrCode} at ${node.name}, ${floorLabel(node.floor)} as scanned`}
       onClick={() => onScan(node.id)}
       className={`flex flex-col items-center gap-2 rounded-2xl border bg-white p-3 text-center transition hover:-translate-y-0.5 hover:border-teal hover:shadow-sm ${status.border}`}
     >
