@@ -13,6 +13,7 @@ import DestinationPicker from './components/DestinationPicker.jsx'
 import HospitalMap from './components/HospitalMap.jsx'
 import RouteDirections from './components/RouteDirections.jsx'
 import ArrivalScreen from './components/ArrivalScreen.jsx'
+import QRCodePage from "./components/QRcodePage.jsx";
 import './App.css'
 
 function ShellHeader({ hospital, currentNode, onSwitchHospital }) {
@@ -46,8 +47,8 @@ function ShellHeader({ hospital, currentNode, onSwitchHospital }) {
 function ShellFooter() {
   return (
     <footer className="border-t border-line px-5 py-4 text-center text-[11.5px] leading-relaxed text-inksoft">
-      Demo prototype · Map and distances are placeholder data · Tapping a tile simulates a QR scan;
-      no camera or QR decoding is used.
+      Demo prototype · Map and distances are placeholder data · Uses your camera to scan real QR
+      codes; tiles are a fallback if the camera is unavailable.
     </footer>
   )
 }
@@ -94,9 +95,27 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [screen, map])
 
-  if (screen === 'welcome') {
+  /*if (screen === 'welcome') {
     return <WelcomeScreen onGetStarted={() => setScreen('hospital')} />
-  }
+  }*/
+ if (screen === 'welcome') {
+  return (
+    <>
+      <WelcomeScreen onGetStarted={() => setScreen('hospital')} />
+
+      <button
+        type="button"
+        onClick={() => setScreen('qrcodes')}
+        className="primary-button"
+      >
+        Generate QR Codes
+      </button>
+    </>
+  )
+}
+if (screen === 'qrcodes') {
+  return <QRCodePage />
+}
 
   if (screen === 'hospital') {
     return (

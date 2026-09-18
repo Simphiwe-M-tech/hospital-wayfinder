@@ -1,0 +1,592 @@
+{
+  "id": "demo-hospital",
+  "name": "Demo Hospital (MSL building)",
+  "floors": [
+    "G",
+    "1"
+  ],
+  "nodes": [
+    {
+      "id": "stairs_left_g",
+      "name": "West Staircase Landing",
+      "floor": "G",
+      "type": "junction",
+      "x": 10,
+      "y": 50
+    },
+    {
+      "id": "hall_west_g",
+      "name": "West Corridor",
+      "floor": "G",
+      "type": "junction",
+      "x": 20,
+      "y": 50
+    },
+    {
+      "id": "hall_mid1_g",
+      "name": "Central Corridor A",
+      "floor": "G",
+      "type": "junction",
+      "x": 40,
+      "y": 50
+    },
+    {
+      "id": "hall_mid2_g",
+      "name": "Central Corridor B",
+      "floor": "G",
+      "type": "junction",
+      "x": 60,
+      "y": 50
+    },
+    {
+      "id": "hall_east_g",
+      "name": "East Corridor",
+      "floor": "G",
+      "type": "junction",
+      "x": 76,
+      "y": 50
+    },
+    {
+      "id": "lift_lobby_g",
+      "name": "Lift Lobby",
+      "floor": "G",
+      "type": "junction",
+      "x": 87,
+      "y": 50
+     
+    },
+    {
+      "id": "stairs_right_g",
+      "name": "East Staircase Landing",
+      "floor": "G",
+      "type": "junction",
+      "x": 94,
+      "y": 50
+    },
+    {
+      "id": "msl006_g",
+      "name": "MSL 006",
+      "floor": "G",
+      "type": "room",
+      "x": 34,
+      "y": 22
+
+    },
+    {
+      "id": "msl005_g",
+      "name": "MSL 005",
+      "floor": "G",
+      "type": "room",
+      "x": 50,
+      "y": 22
+    },
+    {
+      "id": "msl004_g",
+      "name": "MSL 004",
+      "floor": "G",
+      "type": "room",
+      "x": 69,
+      "y": 22
+    },
+    {
+      "id": "reception_g",
+      "name": "MSL Collection Centre 001 (Reception)",
+      "floor": "G",
+      "type": "room",
+      "x": 72,
+      "y": 72
+    },
+    {
+      "id": "male_toilet_g",
+      "name": "Male Toilet",
+      "floor": "G",
+      "type": "bathroom",
+      "x": 96,
+      "y": 20
+    },
+    {
+      "id": "female_toilet_g",
+      "name": "Female Toilet",
+      "floor": "G",
+      "type": "bathroom",
+      "x": 96,
+      "y": 32
+    },
+    {
+      "id": "lift_g",
+      "name": "Lift",
+      "floor": "G",
+      "type": "lift",
+      "x": 88,
+      "y": 65
+    },
+    {
+      "id": "stairs_left_1",
+      "name": "West Staircase Landing",
+      "floor": "1",
+      "type": "junction",
+      "x": 10,
+      "y": 50
+    },
+    {
+      "id": "hall_west_1",
+      "name": "West Corridor",
+      "floor": "1",
+      "type": "junction",
+      "x": 20,
+      "y": 50
+    },
+    {
+      "id": "hall_mid1_1",
+      "name": "Central Corridor A",
+      "floor": "1",
+      "type": "junction",
+      "x": 40,
+      "y": 50
+    },
+    {
+      "id": "hall_mid2_1",
+      "name": "Central Corridor B",
+      "floor": "1",
+      "type": "junction",
+      "x": 60,
+      "y": 50
+    },
+    {
+      "id": "hall_east_1",
+      "name": "East Corridor",
+      "floor": "1",
+      "type": "junction",
+      "x": 76,
+      "y": 50
+    },
+    {
+      "id": "lift_lobby_1",
+      "name": "Lift Lobby",
+      "floor": "1",
+      "type": "junction",
+      "x": 87,
+      "y": 50
+    },
+    {
+      "id": "stairs_right_1",
+      "name": "East Staircase Landing",
+      "floor": "1",
+      "type": "junction",
+      "x": 94,
+      "y": 50
+      
+    },
+    {
+      "id": "actuarial_sciences_1",
+      "name": "Actuarial Sciences",
+      "floor": "1",
+      "type": "room",
+      "x": 9,
+      "y": 24
+    },
+    {
+      "id": "av_room_1",
+      "name": "AV Room",
+      "floor": "1",
+      "type": "room",
+      "x": 23,
+      "y": 24
+    },
+    {
+      "id": "msl111_1",
+      "name": "MSL 111",
+      "floor": "1",
+      "type": "room",
+      "x": 34,
+      "y": 22
+    },
+    {
+      "id": "msl110_1",
+      "name": "MSL 110",
+      "floor": "1",
+      "type": "room",
+      "x": 46,
+      "y": 22
+    },
+    {
+      "id": "msl109_1",
+      "name": "MSL 109",
+      "floor": "1",
+      "type": "room",
+      "x": 58,
+      "y": 22
+    },
+    {
+      "id": "msl108_1",
+      "name": "MSL 108",
+      "floor": "1",
+      "type": "room",
+      "x": 70,
+      "y": 22
+    },
+    {
+      "id": "ug_robotics_1",
+      "name": "UG Robotics",
+      "floor": "1",
+      "type": "room",
+      "x": 35,
+      "y": 73
+    },
+    {
+      "id": "software_dev_1",
+      "name": "Software Dev",
+      "floor": "1",
+      "type": "room",
+      "x": 43,
+      "y": 73
+    },
+    {
+      "id": "web_dev_1",
+      "name": "Web Dev",
+      "floor": "1",
+      "type": "room",
+      "x": 50,
+      "y": 73
+    },
+    {
+      "id": "high_perf_comp_1",
+      "name": "High Perf. Comp",
+      "floor": "1",
+      "type": "room",
+      "x": 57,
+      "y": 73
+    },
+    {
+      "id": "comp_eco_1",
+      "name": "Comp Eco",
+      "floor": "1",
+      "type": "room",
+      "x": 64,
+      "y": 73
+    },
+    {
+      "id": "high_diploma_lab_1",
+      "name": "High Diploma Comp Sc Lab",
+      "floor": "1",
+      "type": "room",
+      "x": 73,
+      "y": 73
+    },
+    {
+      "id": "electrical_1",
+      "name": "Electrical",
+      "floor": "1",
+      "type": "room",
+      "x": 83,
+      "y": 73
+    },
+    {
+      "id": "male_toilet_1",
+      "name": "Male Toilet",
+      "floor": "1",
+      "type": "bathroom",
+      "x": 96,
+      "y": 20
+    },
+    {
+      "id": "female_toilet_1",
+      "name": "Female Toilet",
+      "floor": "1",
+      "type": "bathroom",
+      "x": 96,
+      "y": 32
+    },
+    {
+      "id": "accessible_toilet_1",
+      "name": "Accessible Toilet",
+      "floor": "1",
+      "type": "bathroom",
+      "x": 86,
+      "y": 33
+    },
+    {
+      "id": "lift_1",
+      "name": "Lift",
+      "floor": "1",
+      "type": "lift",
+      "x": 88,
+      "y": 65
+    }
+  ],
+  "edges": [
+    {
+      "from": "stairs_left_g",
+      "to": "hall_west_g",
+      "distance": 5,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_west_g",
+      "to": "hall_mid1_g",
+      "distance": 15,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid1_g",
+      "to": "hall_mid2_g",
+      "distance": 15,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid2_g",
+      "to": "hall_east_g",
+      "distance": 12,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_east_g",
+      "to": "lift_lobby_g",
+      "distance": 7,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_lobby_g",
+      "to": "stairs_right_g",
+      "distance": 5,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_lobby_g",
+      "to": "lift_g",
+      "distance": 3,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "stairs_left_1",
+      "to": "hall_west_1",
+      "distance": 5,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_west_1",
+      "to": "hall_mid1_1",
+      "distance": 15,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid1_1",
+      "to": "hall_mid2_1",
+      "distance": 15,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid2_1",
+      "to": "hall_east_1",
+      "distance": 12,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_east_1",
+      "to": "lift_lobby_1",
+      "distance": 7,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_lobby_1",
+      "to": "stairs_right_1",
+      "distance": 5,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_lobby_1",
+      "to": "lift_1",
+      "distance": 3,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid1_g",
+      "to": "msl006_g",
+      "distance": 6,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid1_g",
+      "to": "msl005_g",
+      "distance": 8,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid2_g",
+      "to": "msl004_g",
+      "distance": 8,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_east_g",
+      "to": "reception_g",
+      "distance": 8,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_lobby_g",
+      "to": "male_toilet_g",
+      "distance": 4,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_lobby_g",
+      "to": "female_toilet_g",
+      "distance": 4,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_west_1",
+      "to": "actuarial_sciences_1",
+      "distance": 7,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_west_1",
+      "to": "av_room_1",
+      "distance": 5,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid1_1",
+      "to": "msl111_1",
+      "distance": 6,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid1_1",
+      "to": "msl110_1",
+      "distance": 8,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid2_1",
+      "to": "msl109_1",
+      "distance": 7,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_east_1",
+      "to": "msl108_1",
+      "distance": 6,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid1_1",
+      "to": "ug_robotics_1",
+      "distance": 6,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid1_1",
+      "to": "software_dev_1",
+      "distance": 7,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid1_1",
+      "to": "web_dev_1",
+      "distance": 9,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid2_1",
+      "to": "high_perf_comp_1",
+      "distance": 6,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_mid2_1",
+      "to": "comp_eco_1",
+      "distance": 7,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "hall_east_1",
+      "to": "high_diploma_lab_1",
+      "distance": 7,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_lobby_1",
+      "to": "electrical_1",
+      "distance": 5,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_lobby_1",
+      "to": "male_toilet_1",
+      "distance": 4,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_lobby_1",
+      "to": "female_toilet_1",
+      "distance": 4,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_lobby_1",
+      "to": "accessible_toilet_1",
+      "distance": 3,
+      "type": "corridor",
+      "accessible": true
+    },
+    {
+      "from": "lift_g",
+      "to": "lift_1",
+      "distance": 8,
+      "type": "elevator",
+      "accessible": true
+    },
+    {
+      "from": "stairs_left_g",
+      "to": "stairs_left_1",
+      "distance": 8,
+      "type": "staircase",
+      "accessible": false
+    },
+    {
+      "from": "stairs_right_g",
+      "to": "stairs_right_1",
+      "distance": 8,
+      "type": "staircase",
+      "accessible": false
+    }
+  ]
+}
