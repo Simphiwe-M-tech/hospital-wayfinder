@@ -1,5 +1,6 @@
 import { Check, Navigation } from 'lucide-react'
 import { floorLabel } from '../utils/directions.js'
+import { formatEstimatedWalkingTime } from '../utils/walkingTime.js'
 
 export default function ArrivalScreen({ destinationNode, journey, onRestart }) {
   return (
@@ -21,22 +22,34 @@ export default function ArrivalScreen({ destinationNode, journey, onRestart }) {
         </div>
         {journey && journey.steps > 0 && (
           <div className="flex items-stretch justify-center divide-x divide-line border-t border-line">
-            <div className="px-7 py-3.5 text-center">
+            <div className="px-5 py-3.5 text-center">
               <p className="text-[16px] font-extrabold leading-tight text-ink">
                 {Math.round(journey.distance)} m
               </p>
               <p className="text-[10.5px] font-semibold uppercase tracking-wide text-inksoft">Route</p>
             </div>
-            <div className="px-7 py-3.5 text-center">
+            <div className="px-5 py-3.5 text-center">
               <p className="text-[16px] font-extrabold leading-tight text-ink">{journey.steps}</p>
               <p className="text-[10.5px] font-semibold uppercase tracking-wide text-inksoft">Steps</p>
             </div>
+            {typeof journey.walkingDistance === 'number' && (
+              <div className="px-5 py-3.5 text-center">
+                <p className="text-[16px] font-extrabold leading-tight text-ink">
+                  {formatEstimatedWalkingTime(journey.walkingDistance).replace(' walk', '')}
+                </p>
+                <p className="text-[10.5px] font-semibold uppercase tracking-wide text-inksoft">Est. walk</p>
+              </div>
+            )}
           </div>
         )}
       </div>
 
       <p className="screen-sub text-center">
-        This result comes from a selected map point or simulated checkpoint; it does not verify your physical location.
+        This result comes from a selected map point or simulated checkpoint; it does not verify your
+        physical location.
+        {journey?.includesLift
+          ? ' Walking time excludes unverified lift waiting and ride time. Distances are provisional.'
+          : ' Distances and walking times are provisional estimates.'}
       </p>
 
       <button type="button" onClick={onRestart} className="primary-button w-full text-[15px]">

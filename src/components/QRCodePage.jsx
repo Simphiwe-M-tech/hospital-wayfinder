@@ -20,9 +20,6 @@ function QRcodePage() {
 
       const imageData = canvas.toDataURL("image/png");
 
-      const pageWidth = 210;
-      const pageHeight = 297;
-
       const margin = 15;
       const qrWidth = 80;
       const qrHeight = 80;

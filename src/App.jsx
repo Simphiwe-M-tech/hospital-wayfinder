@@ -3,6 +3,7 @@ import { LoaderCircle } from 'lucide-react'
 import { findRoute } from './algorithms/astar.js'
 import { buildSteps, floorLabel } from './utils/directions.js'
 import { classifyScan } from './utils/reroute.js'
+import { routeIncludesLift, walkingDistanceMetres } from './utils/walkingTime.js'
 import { hospitals } from './lib/hospitals.js'
 import { adaptHospitalMap, resolveScan } from './lib/mapAdapter.js'
 import BrandMark from './components/BrandMark.jsx'
@@ -343,6 +344,7 @@ if (screen === 'qrcodes') {
               stepIndex={stepIndex}
             />
             <RouteDirections
+              map={map}
               currentNode={currentNode}
               destinationNode={destinationNode}
               route={route}
@@ -359,7 +361,16 @@ if (screen === 'qrcodes') {
         {screen === 'arrival' && (
           <ArrivalScreen
             destinationNode={destinationNode}
-            journey={route ? { distance: route.distance, steps: steps.length } : null}
+            journey={
+              route
+                ? {
+                    distance: route.distance,
+                    steps: steps.length,
+                    walkingDistance: walkingDistanceMetres(map, route.path, accessible),
+                    includesLift: routeIncludesLift(map, route.path, accessible),
+                  }
+                : null
+            }
             onRestart={handleRestart}
           />
         )}
