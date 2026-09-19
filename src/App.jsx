@@ -401,13 +401,19 @@ useEffect(() => {
     return (
       <>
         <WelcomeScreen onGetStarted={() => navigateTo('hospital')} />
-        <button type="button" onClick={() => navigateTo('qrcodes')} className="primary-button">
-          Generate QR Codes
-        </button>
+          {
+            import.meta.env.DEV && (
+              <button type = "button" onClick = {() => navigateTo('qrcodes')} className = "primary-button">
+              ⓘ
+              </button>
+            )}
+      
+      
       </>
     )
   }
-
+     
+  
   if (screen === 'qrcodes') {
     return <QRCodePage onBack={requestBack} />
   }
