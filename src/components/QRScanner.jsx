@@ -19,8 +19,11 @@ function CameraScanner({ onDetect }) {
   const rafRef = useRef(null)
   const lastRef = useRef({ code: null, time: 0 })
   const onDetectRef = useRef(onDetect)
-  onDetectRef.current = onDetect
   const [status, setStatus] = useState('starting') // starting | ready | denied | unsupported | error
+
+  useEffect(() => {
+    onDetectRef.current = onDetect
+  }, [onDetect])
 
   useEffect(() => {
     let cancelled = false
@@ -96,7 +99,6 @@ function CameraScanner({ onDetect }) {
   return (
     <div className="card overflow-hidden">
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-ink">
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
         <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
         {status === 'ready' && (

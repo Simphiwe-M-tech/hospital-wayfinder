@@ -12,6 +12,11 @@ import {
   TriangleAlert,
 } from 'lucide-react'
 import { floorLabel } from '../utils/directions.js'
+import {
+  formatEstimatedWalkingTime,
+  routeIncludesLift,
+  walkingDistanceMetres,
+} from '../utils/walkingTime.js'
 import AccessibleToggle from './AccessibleToggle.jsx'
 
 // buildSteps emits a fixed set of instruction templates; map each to an icon
@@ -30,6 +35,7 @@ function stepIcon(step) {
 }
 
 export default function RouteDirections({
+  map,
   currentNode,
   destinationNode,
   route,
@@ -42,6 +48,9 @@ export default function RouteDirections({
   onScanNext,
 }) {
   const remainingDistance = steps.slice(stepIndex).reduce((total, step) => total + step.distance, 0)
+  const remainingPath = route?.path?.slice(stepIndex) ?? []
+  const remainingWalk = map && route ? walkingDistanceMetres(map, remainingPath, accessible) : 0
+  const usesLift = map && route ? routeIncludesLift(map, route.path, accessible) : false
   const progress = steps.length ? Math.round((stepIndex / steps.length) * 100) : 0
   const noticeTone = typeof notice === 'string' ? 'info' : notice?.tone ?? 'info'
   const noticeText = typeof notice === 'string' ? notice : notice?.text
@@ -69,9 +78,18 @@ export default function RouteDirections({
             <div className="shrink-0 pl-2 text-right">
               <p className="text-[20px] font-extrabold leading-none">{Math.round(remainingDistance)} m</p>
               <p className="mt-1.5 text-[10.5px] text-white/70">of {Math.round(route.distance)} m left</p>
+              <p className="mt-2 text-[12px] font-semibold text-teal-soft">
+                {formatEstimatedWalkingTime(remainingWalk)}
+              </p>
+              <p className="mt-1 text-[10px] text-white/55">Est. walking time · provisional distances</p>
             </div>
           )}
         </div>
+        {route && usesLift && (
+          <p className="border-b border-line bg-teal-soft/40 px-4 py-2 text-[11px] leading-snug text-inksoft">
+            Walking time only — lift waiting and ride time are not included (unverified).
+          </p>
+        )}
         <div className="px-4 py-3.5">
           <div className="flex items-center justify-between text-[11px] font-semibold text-inksoft">
             <span>Journey progress</span>

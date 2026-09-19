@@ -117,8 +117,8 @@
       "name": "Lift",
       "floor": "G",
       "type": "lift",
-      "x": 88,
-      "y": 65
+      "x": 100,
+      "y": 38
     },
     {
       "id": "stairs_left_1",
@@ -310,8 +310,8 @@
       "name": "Lift",
       "floor": "1",
       "type": "lift",
-      "x": 88,
-      "y": 65
+      "x": 100,
+      "y": 38
     }
   ],
   "nodes": [
@@ -431,8 +431,8 @@
       "name": "Lift",
       "floor": "G",
       "type": "lift",
-      "x": 88,
-      "y": 65
+      "x": 100,
+      "y": 38
     },
     {
       "id": "stairs_left_1",
@@ -632,8 +632,8 @@
       "name": "Lift",
       "floor": "1",
       "type": "lift",
-      "x": 88,
-      "y": 65
+      "x": 100,
+      "y": 38
     }
   ],
   "edges": [
