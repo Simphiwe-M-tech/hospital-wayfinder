@@ -228,13 +228,16 @@ export default function App() {
           onGetStarted={() => setScreen('hospital')}
         />
 
-        <button
-          type="button"
-          onClick={() => setScreen('qrcodes')}
-          className="primary-button"
-        >
-          Generate QR Codes
-        </button>
+        {import.meta.env.DEV && (
+          <button
+            type="button"
+            onClick={() => setScreen('qrcodes')}
+            className="primary-button"
+            aria-label="Open QR code administration tools"
+          >
+            &#9432;
+          </button>
+        )}
       </>
     )
   }
