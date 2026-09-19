@@ -2,10 +2,22 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { findRoute } from './algorithms/astar.js'
 import { buildSteps, floorLabel } from './utils/directions.js'
+import {
+  arrivalText,
+  localizeStep,
+  routeUpdatedText,
+  voiceTagFor,
+} from './utils/languages.js'
 import { classifyScan } from './utils/reroute.js'
-import { routeIncludesLift, walkingDistanceMetres } from './utils/walkingTime.js'
+import {
+  routeIncludesLift,
+  walkingDistanceMetres,
+} from './utils/walkingTime.js'
 import { hospitals } from './lib/hospitals.js'
-import { adaptHospitalMap, resolveScan } from './lib/mapAdapter.js'
+import {
+  adaptHospitalMap,
+  resolveScan,
+} from './lib/mapAdapter.js'
 import BrandMark from './components/BrandMark.jsx'
 import WelcomeScreen from './components/WelcomeScreen.jsx'
 import HospitalSelector from './components/HospitalSelector.jsx'
@@ -18,7 +30,11 @@ import ArrivalScreen from './components/ArrivalScreen.jsx'
 import QRCodePage from './components/QRCodePage.jsx'
 import './App.css'
 
-function ShellHeader({ hospital, currentNode, onSwitchHospital }) {
+function ShellHeader({
+  hospital,
+  currentNode,
+  onSwitchHospital,
+}) {
   return (
     <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
       <div className="flex min-w-0 items-center gap-2.5">
@@ -80,6 +96,15 @@ export default function App() {
     () => localStorage.getItem('voice-guidance') === 'on',
   )
 
+  const [
+    navigationLanguage,
+    setNavigationLanguage,
+  ] = useState(
+    () =>
+      localStorage.getItem('navigation-language') ??
+      'en',
+  )
+
   const mainRef = useRef(null)
   const lastSpokenRef = useRef('')
 
@@ -95,7 +120,34 @@ export default function App() {
         window.speechSynthesis.cancel()
       }
 
-      const utterance = new SpeechSynthesisUtterance(message)
+      const utterance =
+        new SpeechSynthesisUtterance(message)
+
+      const voiceTag =
+        voiceTagFor(navigationLanguage)
+
+      const availableVoices =
+        window.speechSynthesis.getVoices()
+
+      const matchingVoice =
+        availableVoices.find(
+          (voice) =>
+            voice.lang.toLowerCase() ===
+            voiceTag.toLowerCase(),
+        ) ??
+        availableVoices.find((voice) =>
+          voice.lang
+            .toLowerCase()
+            .startsWith(
+              navigationLanguage.toLowerCase(),
+            ),
+        )
+
+      utterance.lang = voiceTag
+
+      if (matchingVoice) {
+        utterance.voice = matchingVoice
+      }
 
       utterance.rate = 0.95
       utterance.pitch = 1
@@ -103,7 +155,7 @@ export default function App() {
 
       window.speechSynthesis.speak(utterance)
     },
-    [voiceSupported],
+    [navigationLanguage, voiceSupported],
   )
 
   useEffect(() => {
@@ -116,7 +168,8 @@ export default function App() {
       .then((rawMap) => {
         if (cancelled) return
 
-        const { map: adaptedMap } = adaptHospitalMap(rawMap)
+        const { map: adaptedMap } =
+          adaptHospitalMap(rawMap)
 
         if (!adaptedMap) {
           setLoadError(true)
@@ -139,22 +192,40 @@ export default function App() {
 
   useEffect(() => {
     mainRef.current?.focus()
-    window.scrollTo({ top: 0, behavior: 'instant' })
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'instant',
+    })
   }, [screen, map])
 
   const byId = new Map(
-    (map?.nodes ?? []).map((node) => [node.id, node]),
+    (map?.nodes ?? []).map((node) => [
+      node.id,
+      node,
+    ]),
   )
 
   const currentNode = byId.get(currentId)
-  const destinationNode = byId.get(destinationId)
+  const destinationNode =
+    byId.get(destinationId)
 
   const steps =
     map && route
-      ? buildSteps(map, route.path, accessible)
+      ? buildSteps(
+          map,
+          route.path,
+          accessible,
+        ).map((step) =>
+          localizeStep(
+            step,
+            navigationLanguage,
+          ),
+        )
       : []
 
-  const currentInstruction = steps[stepIndex]?.text ?? ''
+  const currentInstruction =
+    steps[stepIndex]?.text ?? ''
 
   useEffect(() => {
     localStorage.setItem(
@@ -162,48 +233,99 @@ export default function App() {
       voiceEnabled ? 'on' : 'off',
     )
 
-    if (!voiceEnabled && voiceSupported) {
+    if (
+      !voiceEnabled &&
+      voiceSupported
+    ) {
       window.speechSynthesis.cancel()
     }
   }, [voiceEnabled, voiceSupported])
 
   useEffect(() => {
-    if (!voiceEnabled || !voiceSupported) return
+    localStorage.setItem(
+      'navigation-language',
+      navigationLanguage,
+    )
 
-    if (screen === 'route' && currentInstruction) {
-      const routeKey = route?.path?.join('>') ?? 'no-route'
+    lastSpokenRef.current = ''
+  }, [navigationLanguage])
+
+  useEffect(() => {
+    if (
+      !voiceEnabled ||
+      !voiceSupported
+    ) {
+      return
+    }
+
+    if (
+      screen === 'route' &&
+      currentInstruction
+    ) {
+      const routeKey =
+        route?.path?.join('>') ??
+        'no-route'
+
       const spokenKey =
         `${routeKey}:${stepIndex}:${currentInstruction}`
 
-      if (lastSpokenRef.current !== spokenKey) {
+      if (
+        lastSpokenRef.current !==
+        spokenKey
+      ) {
         const noticeText =
           typeof notice === 'string'
             ? notice
             : notice?.text
 
         const routeWasUpdated =
-          noticeText?.startsWith('Route updated')
+          noticeText?.startsWith(
+            'Route updated',
+          )
+
+        const routeUpdateMessage =
+          routeWasUpdated
+            ? `${routeUpdatedText(
+                navigationLanguage,
+              )} `
+            : ''
 
         speak(
-          `${routeWasUpdated ? 'Route updated. ' : ''}${currentInstruction}`,
+          `${routeUpdateMessage}${currentInstruction}`,
         )
 
-        lastSpokenRef.current = spokenKey
+        lastSpokenRef.current =
+          spokenKey
       }
     }
 
-    if (screen === 'arrival' && destinationNode) {
-      const spokenKey = `arrival:${destinationNode.id}`
+    if (
+      screen === 'arrival' &&
+      destinationNode
+    ) {
+      const spokenKey =
+        `arrival:${destinationNode.id}`
 
-      if (lastSpokenRef.current !== spokenKey) {
-        speak(`You have arrived at ${destinationNode.name}.`)
-        lastSpokenRef.current = spokenKey
+      if (
+        lastSpokenRef.current !==
+        spokenKey
+      ) {
+        speak(
+          arrivalText(
+            destinationNode.name,
+            navigationLanguage,
+          ),
+        )
+
+        lastSpokenRef.current =
+          spokenKey
       }
     }
   }, [
     currentInstruction,
     destinationNode,
     notice,
+    navigationLanguage,
     route,
     screen,
     speak,
@@ -225,13 +347,17 @@ export default function App() {
     return (
       <>
         <WelcomeScreen
-          onGetStarted={() => setScreen('hospital')}
+          onGetStarted={() =>
+            setScreen('hospital')
+          }
         />
 
         {import.meta.env.DEV && (
           <button
             type="button"
-            onClick={() => setScreen('qrcodes')}
+            onClick={() =>
+              setScreen('qrcodes')
+            }
             className="primary-button"
             aria-label="Open QR code administration tools"
           >
@@ -245,7 +371,9 @@ export default function App() {
   if (screen === 'qrcodes') {
     return (
       <QRCodePage
-        onBack={() => setScreen('welcome')}
+        onBack={() =>
+          setScreen('welcome')
+        }
       />
     )
   }
@@ -256,7 +384,9 @@ export default function App() {
         <ShellHeader
           hospital={hospital}
           currentNode={null}
-          onSwitchHospital={() => setScreen('welcome')}
+          onSwitchHospital={() =>
+            setScreen('welcome')
+          }
         />
 
         <main
@@ -267,8 +397,12 @@ export default function App() {
         >
           <HospitalSelector
             hospitals={hospitals}
-            onSelect={handleSelectHospital}
-            onBack={() => setScreen('welcome')}
+            onSelect={
+              handleSelectHospital
+            }
+            onBack={() =>
+              setScreen('welcome')
+            }
           />
         </main>
 
@@ -283,7 +417,9 @@ export default function App() {
         <ShellHeader
           hospital={previewHospital}
           currentNode={null}
-          onSwitchHospital={() => setScreen('hospital')}
+          onSwitchHospital={() =>
+            setScreen('hospital')
+          }
         />
 
         <main
@@ -294,8 +430,12 @@ export default function App() {
         >
           <HospitalOverview
             hospital={previewHospital}
-            onBack={() => setScreen('hospital')}
-            onStartNavigation={handleStartNavigation}
+            onBack={() =>
+              setScreen('hospital')
+            }
+            onStartNavigation={
+              handleStartNavigation
+            }
           />
         </main>
 
@@ -323,7 +463,10 @@ export default function App() {
                 The hospital map could not be loaded
               </h1>
 
-              <p role="alert" className="inline-notice">
+              <p
+                role="alert"
+                className="inline-notice"
+              >
                 Check your connection and try again.
               </p>
 
@@ -345,8 +488,10 @@ export default function App() {
                   className="primary-button"
                   onClick={() => {
                     setLoadError(false)
+
                     setLoadAttempt(
-                      (attempt) => attempt + 1,
+                      (attempt) =>
+                        attempt + 1,
                     )
                   }}
                 >
@@ -366,7 +511,10 @@ export default function App() {
                 id="screen-heading"
                 className="screen-heading text-[24px]"
               >
-                Loading {hospital?.name ?? 'hospital'}…
+                Loading{' '}
+                {hospital?.name ??
+                  'hospital'}
+                …
               </h1>
 
               <p
@@ -390,6 +538,7 @@ export default function App() {
     setRoute(null)
     setStepIndex(0)
     setNotice(null)
+
     lastSpokenRef.current = ''
   }
 
@@ -403,7 +552,12 @@ export default function App() {
   }
 
   function handleStartNavigation(entry) {
-    if (!entry.navigationAvailable || !entry.loadMap) return
+    if (
+      !entry.navigationAvailable ||
+      !entry.loadMap
+    ) {
+      return
+    }
 
     resetJourney()
     setMap(null)
@@ -428,6 +582,7 @@ export default function App() {
         text: 'This checkpoint is not on the hospital map. Try another location.',
         tone: 'info',
       })
+
       return
     }
 
@@ -456,7 +611,10 @@ export default function App() {
 
     if (result === 'advance') {
       setStepIndex(
-        route.path.indexOf(id, stepIndex + 1),
+        route.path.indexOf(
+          id,
+          stepIndex + 1,
+        ),
       )
     } else if (result === 'same') {
       setNotice({
@@ -513,7 +671,10 @@ export default function App() {
     setAccessible(next)
     setNotice(null)
 
-    if (currentId && destinationId) {
+    if (
+      currentId &&
+      destinationId
+    ) {
       setRoute(
         findRoute(
           map,
@@ -553,8 +714,12 @@ export default function App() {
       destinationNode
     ) {
       speak(
-        `You have arrived at ${destinationNode.name}.`,
+        arrivalText(
+          destinationNode.name,
+          navigationLanguage,
+        ),
       )
+
       return
     }
 
@@ -566,7 +731,9 @@ export default function App() {
       <ShellHeader
         hospital={hospital}
         currentNode={currentNode}
-        onSwitchHospital={handleSwitchHospital}
+        onSwitchHospital={
+          handleSwitchHospital
+        }
       />
 
       <main
@@ -586,8 +753,14 @@ export default function App() {
             onScan={handleScan}
             onBack={
               destinationId
-                ? () => changeScreen('route')
-                : () => changeScreen('hospital')
+                ? () =>
+                    changeScreen(
+                      'route',
+                    )
+                : () =>
+                    changeScreen(
+                      'hospital',
+                    )
             }
           />
         )}
@@ -618,7 +791,9 @@ export default function App() {
             <HospitalMap
               map={map}
               currentNode={currentNode}
-              destinationNode={destinationNode}
+              destinationNode={
+                destinationNode
+              }
               route={route}
               stepIndex={stepIndex}
             />
@@ -626,14 +801,26 @@ export default function App() {
             <RouteDirections
               map={map}
               currentNode={currentNode}
-              destinationNode={destinationNode}
+              destinationNode={
+                destinationNode
+              }
               route={route}
               steps={steps}
               stepIndex={stepIndex}
               notice={notice}
               accessible={accessible}
-              voiceEnabled={voiceEnabled}
-              voiceSupported={voiceSupported}
+              voiceEnabled={
+                voiceEnabled
+              }
+              voiceSupported={
+                voiceSupported
+              }
+              navigationLanguage={
+                navigationLanguage
+              }
+              onChangeNavigationLanguage={
+                setNavigationLanguage
+              }
               onToggleAccessible={
                 handleToggleAccessible
               }
@@ -644,7 +831,9 @@ export default function App() {
                 handleRepeatInstruction
               }
               onChangeDestination={() =>
-                changeScreen('destination')
+                changeScreen(
+                  'destination',
+                )
               }
               onScanNext={() =>
                 changeScreen('scan')
@@ -661,8 +850,10 @@ export default function App() {
             journey={
               route
                 ? {
-                    distance: route.distance,
-                    steps: steps.length,
+                    distance:
+                      route.distance,
+                    steps:
+                      steps.length,
                     walkingDistance:
                       walkingDistanceMetres(
                         map,
@@ -678,7 +869,9 @@ export default function App() {
                   }
                 : null
             }
-            onRestart={handleRestart}
+            onRestart={
+              handleRestart
+            }
           />
         )}
       </main>
