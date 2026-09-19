@@ -23,7 +23,7 @@ import DestinationPicker from './components/DestinationPicker.jsx'
 import HospitalMap from './components/HospitalMap.jsx'
 import RouteDirections from './components/RouteDirections.jsx'
 import ArrivalScreen from './components/ArrivalScreen.jsx'
-import QRCodePage from './components/QRcodePage.jsx'
+import QRCodePage from './components/QRCodePage.jsx'
 import './App.css'
 
 function ShellHeader({ hospital, currentNode, onSwitchHospital }) {
@@ -57,8 +57,7 @@ function ShellHeader({ hospital, currentNode, onSwitchHospital }) {
 function ShellFooter() {
   return (
     <footer className="border-t border-line px-5 py-4 text-center text-[11.5px] leading-relaxed text-inksoft">
-      Demo prototype · Map and distances are placeholder data · Uses your camera to scan real QR
-      codes; tiles are a fallback if the camera is unavailable.
+      Hospital Wayfinder
     </footer>
   )
 }
@@ -179,16 +178,17 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [screen, map])
 
-  // Persist journey state across refresh (session only).
-  useEffect(() => {
+useEffect(() => {
     if (skipPersistRef.current) {
       skipPersistRef.current = false
       return
     }
+
     if (screen === 'welcome') {
       clearNavigationSession()
       return
     }
+
     writeNavigationSession({
       screen,
       hospitalId: hospital?.id ?? null,

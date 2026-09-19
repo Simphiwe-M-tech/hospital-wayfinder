@@ -137,7 +137,7 @@ function ManualLocationPicker({ map, onPick }) {
       >
         <span className="flex items-center gap-2.5 text-[13.5px] font-semibold text-ink">
           <MapPin size={16} className="shrink-0 text-teal" aria-hidden="true" />
-          Simulate a map location
+          Choose your location manually
         </span>
         <ChevronDown
           size={17}
@@ -148,8 +148,7 @@ function ManualLocationPicker({ map, onPick }) {
       {open && (
         <div className="border-t border-line pb-3">
           <p className="px-4 pt-3 text-[12px] leading-relaxed text-inksoft">
-            For this demo, select any point on the map — including rooms without
-            a QR checkpoint.
+            Select your current location if you cannot scan a QR code.
           </p>
           {floors.map((floor) => (
             <div key={floor} className="px-2 pt-2">

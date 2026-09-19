@@ -213,7 +213,7 @@ export default function DestinationPicker({
 
             {selectedNode && selectedNode.id === currentNode.id && (
               <p className="inline-notice" data-tone="info">
-                This is your current location — getting directions will simulate arrival at this map point.
+                You are already at this location.
               </p>
             )}
 
