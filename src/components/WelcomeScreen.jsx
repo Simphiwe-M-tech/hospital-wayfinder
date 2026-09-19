@@ -58,14 +58,17 @@ export default function WelcomeScreen({ onGetStarted }) {
         <div className="flex items-center gap-3">
           <BrandMark size={36} inverted />
           <div>
-            <p className="text-[15px] font-bold leading-tight text-white">Hospital Wayfinder</p>
-            <p className="text-[11.5px] leading-tight text-white/65">Indoor hospital navigation</p>
+            <p className="text-[15px] font-bold leading-tight text-white">
+              Hospital Wayfinder
+            </p>
           </div>
         </div>
 
         <div className="welcome-main">
           <div className="welcome-copy">
-            <p className="screen-eyebrow text-white/70">Indoor hospital navigation</p>
+            <p className="screen-eyebrow text-white/70">
+              Indoor hospital navigation
+            </p>
             <h1 className="mt-3 text-[clamp(34px,9vw,42px)] font-bold leading-[1.08] tracking-[-0.025em] text-white">
               Find your way.
               <br />
@@ -77,6 +80,7 @@ export default function WelcomeScreen({ onGetStarted }) {
               need them.
             </p>
           </div>
+
           <RouteIllustration className="welcome-route-illustration" />
         </div>
 
@@ -87,21 +91,26 @@ export default function WelcomeScreen({ onGetStarted }) {
                 key={label}
                 className="flex flex-1 flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-2 py-3.5 text-center"
               >
-                <FeatureIcon size={20} strokeWidth={1.8} className="text-white/90" aria-hidden="true" />
-                <p className="text-[11.5px] font-semibold leading-tight text-white/85">{label}</p>
+                <FeatureIcon
+                  size={20}
+                  strokeWidth={1.8}
+                  className="text-white/90"
+                  aria-hidden="true"
+                />
+                <p className="text-[11.5px] font-semibold leading-tight text-white/85">
+                  {label}
+                </p>
               </div>
             ))}
           </div>
 
-          <div>
-            <button
-              type="button"
-              className="primary-button on-dark w-full text-[15px]"
-              onClick={onGetStarted}
-            >
-              Get started
-            </button>
-          </div>
+          <button
+            type="button"
+            className="primary-button on-dark w-full text-[15px]"
+            onClick={onGetStarted}
+          >
+            Get started
+          </button>
         </div>
       </div>
     </section>

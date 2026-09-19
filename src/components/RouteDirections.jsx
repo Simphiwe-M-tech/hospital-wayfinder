@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   ArrowRight,
   Check,
   Compass,
@@ -46,6 +47,7 @@ export default function RouteDirections({
   onToggleAccessible,
   onChangeDestination,
   onScanNext,
+  onBack,
 }) {
   const remainingDistance = steps.slice(stepIndex).reduce((total, step) => total + step.distance, 0)
   const remainingPath = route?.path?.slice(stepIndex) ?? []
@@ -58,10 +60,24 @@ export default function RouteDirections({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <p className="screen-eyebrow">Step 4 of 4 · Route</p>
-        <h1 id="screen-heading" className="screen-heading mt-1 text-[26px]">
-          On your way
-        </h1>
+        <div className="flex items-center gap-2">
+          {onBack && (
+            <button
+              type="button"
+              className="icon-button -ml-3 shrink-0"
+              onClick={onBack}
+              aria-label="Back to destination selection"
+            >
+              <ArrowLeft size={20} aria-hidden="true" />
+            </button>
+          )}
+          <div className="min-w-0">
+            <p className="screen-eyebrow">Step 4 of 4 · Route</p>
+            <h1 id="screen-heading" className="screen-heading mt-1 text-[26px]">
+              On your way
+            </h1>
+          </div>
+        </div>
         <p className="screen-sub mt-1.5">
           Follow the highlighted route on the map and scan each checkpoint as you reach it.
         </p>

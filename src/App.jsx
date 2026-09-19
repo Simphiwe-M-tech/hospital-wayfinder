@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { LoaderCircle } from 'lucide-react'
+import { ArrowLeft, LoaderCircle } from 'lucide-react'
 import { findRoute } from './algorithms/astar.js'
 import { buildSteps, floorLabel } from './utils/directions.js'
 import { classifyScan } from './utils/reroute.js'
 import { routeIncludesLift, walkingDistanceMetres } from './utils/walkingTime.js'
+import {
+  clearNavigationSession,
+  findHospital,
+  previousScreen,
+  readNavigationSession,
+  reconcileJourney,
+  writeNavigationSession,
+} from './utils/navigationSession.js'
 import { hospitals } from './lib/hospitals.js'
 import { adaptHospitalMap, resolveScan } from './lib/mapAdapter.js'
 import BrandMark from './components/BrandMark.jsx'
@@ -15,7 +23,7 @@ import DestinationPicker from './components/DestinationPicker.jsx'
 import HospitalMap from './components/HospitalMap.jsx'
 import RouteDirections from './components/RouteDirections.jsx'
 import ArrivalScreen from './components/ArrivalScreen.jsx'
-import QRCodePage from "./components/QRCodePage.jsx";
+import QRCodePage from './components/QRCodePage.jsx'
 import './App.css'
 
 function ShellHeader({ hospital, currentNode, onSwitchHospital }) {
@@ -54,20 +62,76 @@ function ShellFooter() {
   )
 }
 
+function bootstrapState() {
+  const session = readNavigationSession()
+  if (!session) {
+    return {
+      screen: 'welcome',
+      hospital: null,
+      previewHospital: null,
+      currentId: null,
+      destinationId: null,
+      accessible: false,
+      route: null,
+      stepIndex: 0,
+      pendingScreen: null,
+    }
+  }
+
+  const hospital = findHospital(hospitals, session.hospitalId)
+  const previewHospital = findHospital(hospitals, session.previewHospitalId)
+  let screen = session.screen
+  let pendingScreen = null
+
+  if (screen === 'overview' && !previewHospital) screen = 'hospital'
+  if (screen === 'qrcodes') {
+    // keep
+  } else if (['loading', 'scan', 'destination', 'route', 'arrival'].includes(screen)) {
+    if (!hospital?.loadMap) {
+      screen = previewHospital ? 'overview' : 'hospital'
+    } else {
+      pendingScreen = screen === 'loading' ? 'scan' : screen
+      screen = 'loading'
+    }
+  }
+
+  return {
+    screen,
+    hospital: hospital?.loadMap ? hospital : null,
+    previewHospital,
+    currentId: typeof session.currentId === 'string' ? session.currentId : null,
+    destinationId: typeof session.destinationId === 'string' ? session.destinationId : null,
+    accessible: Boolean(session.accessible),
+    route: session.route && Array.isArray(session.route.path) ? session.route : null,
+    stepIndex: Number.isFinite(session.stepIndex) ? session.stepIndex : 0,
+    pendingScreen,
+  }
+}
+
 export default function App() {
-  const [hospital, setHospital] = useState(null)
-  const [previewHospital, setPreviewHospital] = useState(null)
+  const [boot] = useState(bootstrapState)
+  const [hospital, setHospital] = useState(boot.hospital)
+  const [previewHospital, setPreviewHospital] = useState(boot.previewHospital)
   const [map, setMap] = useState(null)
   const [loadError, setLoadError] = useState(false)
   const [loadAttempt, setLoadAttempt] = useState(0)
-  const [screen, setScreen] = useState('welcome')
-  const [currentId, setCurrentId] = useState(null)
-  const [destinationId, setDestinationId] = useState(null)
-  const [accessible, setAccessible] = useState(false)
-  const [route, setRoute] = useState(null)
-  const [stepIndex, setStepIndex] = useState(0)
+  const [screen, setScreen] = useState(boot.screen)
+  const [currentId, setCurrentId] = useState(boot.currentId)
+  const [destinationId, setDestinationId] = useState(boot.destinationId)
+  const [accessible, setAccessible] = useState(boot.accessible)
+  const [route, setRoute] = useState(boot.route)
+  const [stepIndex, setStepIndex] = useState(boot.stepIndex)
   const [notice, setNotice] = useState(null)
   const mainRef = useRef(null)
+  const pendingScreenRef = useRef(boot.pendingScreen)
+  const historyDepthRef = useRef(0)
+  const ignorePopRef = useRef(false)
+  const skipPersistRef = useRef(true)
+
+  // Seed browser history with the restored/current screen (no extra stack entry).
+  useEffect(() => {
+    window.history.replaceState({ hwScreen: screen }, '')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- mount only
 
   useEffect(() => {
     if (!hospital?.loadMap) return undefined
@@ -81,8 +145,23 @@ export default function App() {
           setLoadError(true)
           return
         }
+        const pending = pendingScreenRef.current ?? (screen === 'loading' ? 'scan' : screen)
+        pendingScreenRef.current = null
+        const reconciled = reconcileJourney(adaptedMap, {
+          screen: pending,
+          currentId,
+          destinationId,
+          accessible,
+          route,
+          stepIndex,
+        })
         setMap(adaptedMap)
-        setScreen('scan')
+        setCurrentId(reconciled.currentId)
+        setDestinationId(reconciled.destinationId)
+        setRoute(reconciled.route)
+        setStepIndex(reconciled.stepIndex)
+        setScreen(reconciled.screen)
+        window.history.replaceState({ hwScreen: reconciled.screen }, '')
       })
       .catch(() => {
         if (!cancelled) setLoadError(true)
@@ -90,6 +169,8 @@ export default function App() {
     return () => {
       cancelled = true
     }
+    // Intentionally omit journey fields: restore/reconcile runs once per hospital load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hospital, loadAttempt])
 
   useEffect(() => {
@@ -97,37 +178,249 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [screen, map])
 
-  /*if (screen === 'welcome') {
-    return <WelcomeScreen onGetStarted={() => setScreen('hospital')} />
-  }*/
- if (screen === 'welcome') {
-  return (
-    <>
-      <WelcomeScreen onGetStarted={() => setScreen('hospital')} />
+useEffect(() => {
+    if (skipPersistRef.current) {
+      skipPersistRef.current = false
+      return
+    }
 
-      <button
-        type="button"
-        onClick={() => setScreen('qrcodes')}
-        className="primary-button"
-      >
-        Generate QR Codes
-      </button>
-    </>
-  )
-}
-if (screen === 'qrcodes') {
-  return <QRCodePage onBack={() => setScreen('welcome')} />
-}
+    if (screen === 'welcome') {
+      clearNavigationSession()
+      return
+    }
+
+    writeNavigationSession({
+      screen,
+      hospitalId: hospital?.id ?? null,
+      previewHospitalId: previewHospital?.id ?? null,
+      currentId,
+      destinationId,
+      accessible,
+      route: route ? { path: route.path, distance: route.distance } : null,
+      stepIndex,
+    })
+  }, [screen, hospital, previewHospital, currentId, destinationId, accessible, route, stepIndex])
+
+  useEffect(() => {
+    if (!map) return undefined
+    const ids = new Set(map.nodes.map((node) => node.id))
+    if ((screen === 'destination' || screen === 'route' || screen === 'arrival') && (!currentId || !ids.has(currentId))) {
+      navigateTo('scan', { replace: true })
+    } else if ((screen === 'route' || screen === 'arrival') && (!destinationId || !ids.has(destinationId))) {
+      navigateTo(currentId && ids.has(currentId) ? 'destination' : 'scan', { replace: true })
+    }
+    return undefined
+  }, [map, screen, currentId, destinationId])
+
+  function navigateTo(next, { replace = false } = {}) {
+    setNotice(null)
+    setScreen(next)
+    if (ignorePopRef.current) return
+    if (replace) {
+      window.history.replaceState({ hwScreen: next }, '')
+    } else {
+      window.history.pushState({ hwScreen: next }, '')
+      historyDepthRef.current += 1
+    }
+  }
+
+  function applyLogicalBack() {
+    const prev = previousScreen(screen, { destinationId, previewHospital })
+    setNotice(null)
+
+    if (prev === 'welcome') {
+      resetJourney()
+      setMap(null)
+      setHospital(null)
+      setPreviewHospital(null)
+      setLoadError(false)
+      clearNavigationSession()
+      navigateTo('welcome', { replace: true })
+      return
+    }
+
+    if (prev === 'hospital' && (screen === 'scan' || screen === 'loading' || screen === 'overview')) {
+      if (screen === 'loading' || screen === 'scan') {
+        setMap(null)
+        setHospital(null)
+        setLoadError(false)
+        resetJourney()
+      }
+      navigateTo('hospital', { replace: true })
+      return
+    }
+
+    if (prev === 'overview' && screen === 'loading') {
+      setMap(null)
+      setHospital(null)
+      setLoadError(false)
+      resetJourney()
+      navigateTo('overview', { replace: true })
+      return
+    }
+
+    navigateTo(prev, { replace: true })
+  }
+
+  function requestBack() {
+    if (historyDepthRef.current > 0) {
+      window.history.back()
+      return
+    }
+    applyLogicalBack()
+  }
+
+  useEffect(() => {
+    function onPopState(event) {
+      ignorePopRef.current = true
+      historyDepthRef.current = Math.max(0, historyDepthRef.current - 1)
+      const target = event.state?.hwScreen
+      if (typeof target === 'string') {
+        setNotice(null)
+        if (target === 'welcome') {
+          resetJourney()
+          setMap(null)
+          setHospital(null)
+          setPreviewHospital(null)
+          setLoadError(false)
+          clearNavigationSession()
+        }
+        if ((target === 'hospital' || target === 'overview') && screen === 'loading') {
+          setMap(null)
+          setHospital(null)
+          setLoadError(false)
+          resetJourney()
+        }
+        setScreen(target)
+      } else {
+        applyLogicalBack()
+      }
+      queueMicrotask(() => {
+        ignorePopRef.current = false
+      })
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- popstate handler uses latest apply via closure refresh on screen changes
+  }, [screen, destinationId, previewHospital])
+
+  function resetJourney() {
+    setCurrentId(null)
+    setDestinationId(null)
+    setRoute(null)
+    setStepIndex(0)
+    setNotice(null)
+  }
+
+  function handleSelectHospital(entry) {
+    resetJourney()
+    setMap(null)
+    setLoadError(false)
+    setHospital(null)
+    setPreviewHospital(entry)
+    navigateTo('overview')
+  }
+
+  function handleStartNavigation(entry) {
+    if (!entry.navigationAvailable || !entry.loadMap) return
+    resetJourney()
+    setMap(null)
+    setLoadError(false)
+    pendingScreenRef.current = 'scan'
+    setHospital(entry)
+    navigateTo('loading', { replace: true })
+  }
+
+  function handleSwitchHospital() {
+    resetJourney()
+    setMap(null)
+    setHospital(null)
+    setLoadError(false)
+    navigateTo('hospital')
+  }
+
+  function handleScan(code) {
+    const id = resolveScan(map, code)
+    if (!id) {
+      setNotice({ text: 'This checkpoint is not on the hospital map. Try another location.', tone: 'info' })
+      return
+    }
+    setNotice(null)
+    if (!destinationId) {
+      setCurrentId(id)
+      navigateTo('destination')
+      return
+    }
+    const result = classifyScan({ path: route?.path ?? [], stepIndex, currentId, destinationId, scannedId: id })
+    setCurrentId(id)
+    if (result === 'arrived') {
+      navigateTo('arrival')
+      return
+    }
+    if (result === 'advance') {
+      setStepIndex(route.path.indexOf(id, stepIndex + 1))
+    } else if (result === 'same') {
+      setNotice({ text: `You are still at ${byId.get(id).name}. Scan the next checkpoint to continue.`, tone: 'info' })
+    } else {
+      const nextRoute = findRoute(map, id, destinationId, accessible)
+      setRoute(nextRoute)
+      setStepIndex(0)
+      if (nextRoute) setNotice({ text: `Route updated from ${byId.get(id).name}. Follow the updated directions.`, tone: 'success' })
+    }
+    navigateTo('route')
+  }
+
+  function handleChooseDestination(id) {
+    setDestinationId(id)
+    setRoute(findRoute(map, currentId, id, accessible))
+    setStepIndex(0)
+    setNotice(null)
+    navigateTo(id === currentId ? 'arrival' : 'route')
+  }
+
+  function handleToggleAccessible() {
+    const next = !accessible
+    setAccessible(next)
+    setNotice(null)
+    if (currentId && destinationId) {
+      setRoute(findRoute(map, currentId, destinationId, next))
+      setStepIndex(0)
+    }
+  }
+
+  function handleRestart() {
+    resetJourney()
+    navigateTo('scan')
+  }
+
+  function changeScreen(next) {
+    navigateTo(next)
+  }
+
+  if (screen === 'welcome') {
+    return (
+      <>
+        <WelcomeScreen onGetStarted={() => navigateTo('hospital')} />
+        <button type="button" onClick={() => navigateTo('qrcodes')} className="primary-button">
+          Generate QR Codes
+        </button>
+      </>
+    )
+  }
+
+  if (screen === 'qrcodes') {
+    return <QRCodePage onBack={requestBack} />
+  }
 
   if (screen === 'hospital') {
     return (
       <div className="wayfinder-shell">
-        <ShellHeader hospital={hospital} currentNode={null} onSwitchHospital={() => setScreen('welcome')} />
+        <ShellHeader hospital={null} currentNode={null} onSwitchHospital={() => navigateTo('welcome')} />
         <main ref={mainRef} tabIndex={-1} aria-labelledby="screen-heading" className="flex flex-1 flex-col outline-none">
           <HospitalSelector
             hospitals={hospitals}
             onSelect={handleSelectHospital}
-            onBack={() => setScreen('welcome')}
+            onBack={requestBack}
           />
         </main>
         <ShellFooter />
@@ -136,17 +429,28 @@ if (screen === 'qrcodes') {
   }
 
   if (screen === 'overview') {
+    if (!previewHospital) {
+      return (
+        <div className="wayfinder-shell">
+          <ShellHeader hospital={null} currentNode={null} onSwitchHospital={() => navigateTo('welcome')} />
+          <main ref={mainRef} tabIndex={-1} aria-labelledby="screen-heading" className="flex flex-1 flex-col outline-none">
+            <HospitalSelector hospitals={hospitals} onSelect={handleSelectHospital} onBack={requestBack} />
+          </main>
+          <ShellFooter />
+        </div>
+      )
+    }
     return (
       <div className="wayfinder-shell">
         <ShellHeader
           hospital={previewHospital}
           currentNode={null}
-          onSwitchHospital={() => setScreen('hospital')}
+          onSwitchHospital={() => navigateTo('hospital')}
         />
         <main ref={mainRef} tabIndex={-1} aria-labelledby="screen-heading" className="flex flex-1 flex-col outline-none">
           <HospitalOverview
             hospital={previewHospital}
-            onBack={() => setScreen('hospital')}
+            onBack={requestBack}
             onStartNavigation={handleStartNavigation}
           />
         </main>
@@ -155,10 +459,10 @@ if (screen === 'qrcodes') {
     )
   }
 
-  if (screen === 'loading') {
+  if (screen === 'loading' || ((screen === 'scan' || screen === 'destination' || screen === 'route' || screen === 'arrival') && !map)) {
     return (
       <div className="wayfinder-shell">
-        <ShellHeader hospital={hospital} currentNode={null} onSwitchHospital={() => {}} />
+        <ShellHeader hospital={hospital} currentNode={null} onSwitchHospital={handleSwitchHospital} />
         <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16 text-center">
           {loadError ? (
             <>
@@ -175,7 +479,7 @@ if (screen === 'qrcodes') {
                   onClick={() => {
                     setHospital(null)
                     setLoadError(false)
-                    setScreen('hospital')
+                    navigateTo('hospital')
                   }}
                 >
                   Choose another hospital
@@ -194,13 +498,23 @@ if (screen === 'qrcodes') {
             </>
           ) : (
             <>
-              <LoaderCircle size={32} className="animate-spin text-teal" aria-hidden="true" />
-              <h1 id="screen-heading" className="screen-heading text-[24px]">
-                Loading {hospital?.name ?? 'hospital'}…
-              </h1>
-              <p role="status" className="text-sm text-inksoft">
-                Preparing the floor map and checkpoints.
-              </p>
+              <div className="flex w-full max-w-sm flex-col items-center gap-4">
+                <button
+                  type="button"
+                  className="icon-button self-start"
+                  onClick={requestBack}
+                  aria-label="Back"
+                >
+                  <ArrowLeft size={20} aria-hidden="true" />
+                </button>
+                <LoaderCircle size={32} className="animate-spin text-teal" aria-hidden="true" />
+                <h1 id="screen-heading" className="screen-heading text-[24px]">
+                  Loading {hospital?.name ?? 'hospital'}…
+                </h1>
+                <p role="status" className="text-sm text-inksoft">
+                  Preparing the floor map and checkpoints.
+                </p>
+              </div>
             </>
           )}
         </main>
@@ -213,99 +527,6 @@ if (screen === 'qrcodes') {
   const currentNode = byId.get(currentId)
   const destinationNode = byId.get(destinationId)
   const steps = route ? buildSteps(map, route.path, accessible) : []
-
-  function resetJourney() {
-    setCurrentId(null)
-    setDestinationId(null)
-    setRoute(null)
-    setStepIndex(0)
-    setNotice(null)
-  }
-
-  function handleSelectHospital(entry) {
-    resetJourney()
-    setMap(null)
-    setLoadError(false)
-    setHospital(null)
-    setPreviewHospital(entry)
-    setScreen('overview')
-  }
-
-  function handleStartNavigation(entry) {
-    if (!entry.navigationAvailable || !entry.loadMap) return
-    resetJourney()
-    setMap(null)
-    setLoadError(false)
-    setHospital(entry)
-    setScreen('loading')
-  }
-
-  function handleSwitchHospital() {
-    resetJourney()
-    setMap(null)
-    setHospital(null)
-    setLoadError(false)
-    setScreen('hospital')
-  }
-
-  function handleScan(code) {
-    const id = resolveScan(map, code)
-    if (!id) {
-      setNotice({ text: 'This checkpoint is not on the hospital map. Try another location.', tone: 'info' })
-      return
-    }
-    setNotice(null)
-    if (!destinationId) {
-      setCurrentId(id)
-      setScreen('destination')
-      return
-    }
-    const result = classifyScan({ path: route?.path ?? [], stepIndex, currentId, destinationId, scannedId: id })
-    setCurrentId(id)
-    if (result === 'arrived') {
-      setScreen('arrival')
-      return
-    }
-    if (result === 'advance') {
-      setStepIndex(route.path.indexOf(id, stepIndex + 1))
-    } else if (result === 'same') {
-      setNotice({ text: `You are still at ${byId.get(id).name}. Scan the next checkpoint to continue.`, tone: 'info' })
-    } else {
-      const nextRoute = findRoute(map, id, destinationId, accessible)
-      setRoute(nextRoute)
-      setStepIndex(0)
-      if (nextRoute) setNotice({ text: `Route updated from ${byId.get(id).name}. Follow the updated directions.`, tone: 'success' })
-    }
-    setScreen('route')
-  }
-
-  function handleChooseDestination(id) {
-    setDestinationId(id)
-    setRoute(findRoute(map, currentId, id, accessible))
-    setStepIndex(0)
-    setNotice(null)
-    setScreen(id === currentId ? 'arrival' : 'route')
-  }
-
-  function handleToggleAccessible() {
-    const next = !accessible
-    setAccessible(next)
-    setNotice(null)
-    if (currentId && destinationId) {
-      setRoute(findRoute(map, currentId, destinationId, next))
-      setStepIndex(0)
-    }
-  }
-
-  function handleRestart() {
-    resetJourney()
-    setScreen('scan')
-  }
-
-  function changeScreen(next) {
-    setNotice(null)
-    setScreen(next)
-  }
 
   return (
     <div className="wayfinder-shell">
@@ -320,20 +541,20 @@ if (screen === 'qrcodes') {
             stepIndex={stepIndex}
             notice={notice}
             onScan={handleScan}
-            onBack={destinationId ? () => changeScreen('route') : () => changeScreen('hospital')}
+            onBack={requestBack}
           />
         )}
-        {screen === 'destination' && (
+        {screen === 'destination' && currentNode && (
           <DestinationPicker
             map={map}
             currentNode={currentNode}
             accessible={accessible}
             onToggleAccessible={handleToggleAccessible}
             onChoose={handleChooseDestination}
-            onBack={() => changeScreen(destinationId ? 'route' : 'scan')}
+            onBack={requestBack}
           />
         )}
-        {screen === 'route' && (
+        {screen === 'route' && currentNode && destinationNode && (
           <div className="nav-layout">
             <HospitalMap
               map={map}
@@ -354,10 +575,11 @@ if (screen === 'qrcodes') {
               onToggleAccessible={handleToggleAccessible}
               onChangeDestination={() => changeScreen('destination')}
               onScanNext={() => changeScreen('scan')}
+              onBack={requestBack}
             />
           </div>
         )}
-        {screen === 'arrival' && (
+        {screen === 'arrival' && destinationNode && (
           <ArrivalScreen
             destinationNode={destinationNode}
             journey={
@@ -371,6 +593,7 @@ if (screen === 'qrcodes') {
                 : null
             }
             onRestart={handleRestart}
+            onBack={requestBack}
           />
         )}
       </main>
