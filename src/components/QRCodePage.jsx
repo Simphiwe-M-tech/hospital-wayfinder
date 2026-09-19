@@ -4,7 +4,11 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import hospitalMap from "../data/hospital-map.json";
 
-function QRcodePage() {
+const checkpoints = hospitalMap.nodes.filter(
+  (node) => typeof node.qrCode === "string" && node.qrCode.trim().length > 0
+);
+
+function QRCodePage({ onBack }) {
   async function downloadPDF() {
     const pdf = new jsPDF("p", "mm", "a4");
 
@@ -21,22 +25,27 @@ function QRcodePage() {
       const imageData = canvas.toDataURL("image/png");
 
       const margin = 15;
-      const qrWidth = 80;
-      const qrHeight = 80;
+      const maxWidth = 80;
+      const maxHeight = 80;
+      const scale = Math.min(maxWidth / canvas.width, maxHeight / canvas.height);
+      const imageWidth = canvas.width * scale;
+      const imageHeight = canvas.height * scale;
 
       const column = i % 2;
       const row = Math.floor((i % 6) / 2);
 
-      const x = margin + column * 95;
-      const y = margin + row * 90;
+      const cellX = margin + column * 95;
+      const cellY = margin + row * 90;
+      const x = cellX + (maxWidth - imageWidth) / 2;
+      const y = cellY + (maxHeight - imageHeight) / 2;
 
       pdf.addImage(
         imageData,
         "PNG",
         x,
         y,
-        qrWidth,
-        qrHeight
+        imageWidth,
+        imageHeight
       );
 
       // Add a new page after every 6 QR codes
@@ -50,6 +59,9 @@ function QRcodePage() {
 
   return (
     <div style={{ padding: "30px" }}>
+      <button type="button" onClick={onBack} className="icon-button" aria-label="Back to home">
+        ← Back
+      </button>
       <h1>Hospital QR Codes</h1>
 
       <button
@@ -72,7 +84,7 @@ function QRcodePage() {
           gap: "30px",
         }}
       >
-        {hospitalMap.nodes.map((node) => (
+        {checkpoints.map((node) => (
           <div
             key={node.id}
             className="qr-print-item"
@@ -84,12 +96,14 @@ function QRcodePage() {
             }}
           >
             <QRCodeSVG
-              value={node.id}
+              value={node.qrCode}
               size={250}
+              level="H"
+              marginSize={4}
             />
 
             <h3>{node.name}</h3>
-            <p>{node.id}</p>
+            <p>{node.qrCode}</p>
             <p>Floor: {node.floor}</p>
           </div>
         ))}
@@ -98,5 +112,4 @@ function QRcodePage() {
   );
 }
 
-export default QRcodePage;
-
+export default QRCodePage;

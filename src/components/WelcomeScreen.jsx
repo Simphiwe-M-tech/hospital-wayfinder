@@ -59,7 +59,7 @@ export default function WelcomeScreen({ onGetStarted }) {
           <BrandMark size={36} inverted />
           <div>
             <p className="text-[15px] font-bold leading-tight text-white">Hospital Wayfinder</p>
-            <p className="text-[11.5px] leading-tight text-white/65">Indoor navigation demo</p>
+            <p className="text-[11.5px] leading-tight text-white/65">Indoor hospital navigation</p>
           </div>
         </div>
 
@@ -101,9 +101,6 @@ export default function WelcomeScreen({ onGetStarted }) {
             >
               Get started
             </button>
-            <p className="mt-3 text-center text-[11.5px] leading-relaxed text-white/55">
-              Demo prototype · QR scans are simulated in this build
-            </p>
           </div>
         </div>
       </div>

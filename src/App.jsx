@@ -49,8 +49,7 @@ function ShellHeader({ hospital, currentNode, onSwitchHospital }) {
 function ShellFooter() {
   return (
     <footer className="border-t border-line px-5 py-4 text-center text-[11.5px] leading-relaxed text-inksoft">
-      Demo prototype · Map and distances are placeholder data · Uses your camera to scan real QR
-      codes; tiles are a fallback if the camera is unavailable.
+      Hospital Wayfinder
     </footer>
   )
 }
@@ -117,7 +116,7 @@ export default function App() {
   )
 }
 if (screen === 'qrcodes') {
-  return <QRCodePage />
+  return <QRCodePage onBack={() => setScreen('welcome')} />
 }
 
   if (screen === 'hospital') {

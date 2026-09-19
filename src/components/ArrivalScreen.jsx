@@ -11,12 +11,12 @@ export default function ArrivalScreen({ destinationNode, journey, onRestart }) {
             <Check size={30} strokeWidth={2.6} aria-hidden="true" />
           </span>
           <div>
-            <p className="screen-eyebrow text-success">Simulated arrival</p>
+            <p className="screen-eyebrow text-success">Destination reached</p>
             <h1 id="screen-heading" className="screen-heading mt-1.5">
               Arrival at {destinationNode.name}
             </h1>
             <p className="screen-sub mt-2">
-              {floorLabel(destinationNode.floor)} · Your simulated journey is complete.
+              {floorLabel(destinationNode.floor)} · You have reached your destination.
             </p>
           </div>
         </div>
@@ -45,8 +45,8 @@ export default function ArrivalScreen({ destinationNode, journey, onRestart }) {
       </div>
 
       <p className="screen-sub text-center">
-        This result comes from a selected map point or simulated checkpoint; it does not verify your
-        physical location.
+        This confirmation is based on the QR checkpoint or map location selected in the app and does
+        not independently verify your physical location.
         {journey?.includesLift
           ? ' Walking time excludes unverified lift waiting and ride time. Distances are provisional.'
           : ' Distances and walking times are provisional estimates.'}
