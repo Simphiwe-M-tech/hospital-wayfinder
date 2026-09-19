@@ -15,7 +15,7 @@ import DestinationPicker from './components/DestinationPicker.jsx'
 import HospitalMap from './components/HospitalMap.jsx'
 import RouteDirections from './components/RouteDirections.jsx'
 import ArrivalScreen from './components/ArrivalScreen.jsx'
-import QRCodePage from "./components/QRcodePage.jsx";
+import QRCodePage from "./components/QRCodePage.jsx";
 import './App.css'
 
 function ShellHeader({ hospital, currentNode, onSwitchHospital }) {
