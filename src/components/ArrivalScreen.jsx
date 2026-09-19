@@ -1,10 +1,20 @@
-import { Check, Navigation } from 'lucide-react'
+import { ArrowLeft, Check, Navigation } from 'lucide-react'
 import { floorLabel } from '../utils/directions.js'
 import { formatEstimatedWalkingTime } from '../utils/walkingTime.js'
 
-export default function ArrivalScreen({ destinationNode, journey, onRestart }) {
+export default function ArrivalScreen({ destinationNode, journey, onRestart, onBack }) {
   return (
     <div className="app-frame">
+      {onBack && (
+        <button
+          type="button"
+          className="icon-button -ml-3 mb-2 shrink-0"
+          onClick={onBack}
+          aria-label="Back to route directions"
+        >
+          <ArrowLeft size={20} aria-hidden="true" />
+        </button>
+      )}
       <div className="card overflow-hidden">
         <div className="flex flex-col items-center gap-4 bg-success-soft px-4 py-10 text-center">
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success text-white">
